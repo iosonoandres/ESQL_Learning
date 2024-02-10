@@ -1,7 +1,7 @@
 <?php
 global $pdo;
 session_start();
-include "connect.php";
+include "root/connect.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -45,10 +45,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if ($tipologiaUtente === "Studente") {
+
+        
         $nomeStudente = $_POST["nomeStudente"];
         $cognomeStudente = $_POST["cognomeStudente"];
         $telefonoStudente = $_POST["telefonoStudente"];
-        $annoImmatricolazione = $_POST["annoImmatricolazione"];
+        $annoImmatricolazione = date('Y', strtotime($_POST["annoImmatricolazione"]));
         $inputCodice = $_POST["inputCodice"];
 
 
