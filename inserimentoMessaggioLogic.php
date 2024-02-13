@@ -51,26 +51,30 @@ if ($tipoUtente === 'DOCENTE' && isset($_POST['inserisciQuesito'])) {
 }
 
 // Logica per l'inserimento del commento da parte dello studente
-if ($tipoUtente === 'STUDENTE' && isset($_POST['inserisciCommento'])) {
-    $testo = $_POST['testo'];
-    $titoloTest = $_GET['titoloTest']; // Assicurati che 'titoloTest' venga passato correttamente
-    $emailStudente = $_SESSION['user']['email'];
-$opzioneScelta = isset($_POST['opzioneScelta']) ? $_POST['opzioneScelta'] : null;
+if ($tipoUtente === 'studente' && isset($_POST['inserisciCommento'])) {
+    $titolo = $_POST['titolo']; // Il titolo del messaggio inviato dal form.
+    $testo = $_POST['testo']; // Il testo del messaggio inviato dal form.
+    $titoloTest = $_POST['titoloTest']; // Il titolo del test selezionato nel form.
+    $emailStudente = $_SESSION['user']['email']; // Email dello studente dalla sessione.
+    // Devi aggiungere un campo nel form per l'email del docente destinatario.
+    $emailDocenteDestinatario = $_POST['emailDocente']; // Assumi che questo campo sia stato aggiunto al form.
 
+    // Prepara la chiamata alla stored procedure
+    $stmt = $pdo->prepare("CALL dbESQL.InserisciMessaggioStudente(:inputTitolo, :inputTesto, :inputTitoloTest, :inputEmailStudenteMittente, :inputEmailDocenteDestinatario)");
 
-// Assicurati che la stored procedure esista e sia corretta
-$stmt = $pdo->prepare("CALL InserisciRispostaStudente(:emailStudente, :titoloTest, :testo, :opzioneScelta)");
-$stmt->execute([
-    'emailStudente' => $emailStudente,
-    'titoloTest' => $titoloTest,
-    'testo' => $testo,
-    'opzioneScelta' => $opzioneScelta,
-]);
+    // Esegui la stored procedure con i parametri forniti
+    $stmt->execute([
+        'inputTitolo' => $titolo,
+        'inputTesto' => $testo,
+        'inputTitoloTest' => $titoloTest,
+        'inputEmailStudenteMittente' => $emailStudente,
+        'inputEmailDocenteDestinatario' => $emailDocenteDestinatario,
+    ]);
 
-// Imposta un messaggio di successo da mostrare nel file di design
-$_SESSION['message'] = 'Commento inserito correttamente!';
-
+    // Imposta un messaggio di successo da mostrare nel file di design
+    $_SESSION['message'] = 'Commento inserito correttamente!';
 }
+
 
 // Funzione per recuperare i messaggi di un test specifico
 function getMessaggiTest($titoloTest) {

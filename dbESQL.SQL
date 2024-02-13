@@ -411,10 +411,10 @@ DELIMITER ;
 DELIMITER ££
 CREATE PROCEDURE dbESQL.ISCRIZIONE_STUDENTE(
     IN inputEmail VARCHAR(255),
+    IN inputPassword VARCHAR(50),
     IN inputNome VARCHAR(255),
     IN inputCognome VARCHAR(255),
     IN inputTelefono INT,
-    IN inputPassword VARCHAR(50),
     IN inputAnnoImmatricolazione int,
     IN inputCodice CHAR(16)
 )

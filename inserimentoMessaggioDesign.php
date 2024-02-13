@@ -93,6 +93,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="emailDocente">Email Docente Destinatario:</label>
+                <input type="email" class="form-control" name="emailDocente" id="emailDocente" required>
+            </div>
+
             <!-- Assumendo che il commento dello studente possa avere opzioni -->
             <div class="form-group">
                 <label>Opzioni:</label>
