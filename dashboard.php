@@ -86,13 +86,13 @@ $_SESSION['tipoAccount']= "UTENTE_STANDARD"
                 <div class="cell-2 offset-2 pt-30">
                     <div class="more-info-box bg-blue fg-white">
                         <div class="content">
-                            <h2 class="text-bold mb-0"><?php echo "6666666666"; ?></h2>
+                            <h2 class="text-bold mb-0"><?php echo "INSERIMENTO MESSAGGIO"; ?></h2>
                             <div>Sondaggi<br>compilati</div>
                         </div>
                         <div class="icon">
                             <span class="mif-list"></span>
                         </div>
-                        <a href="./visualizza_sondaggi_risposte_personali.php" class="more"> Vedi <span class="mif-arrow-right"></span></a>
+                        <a href="inserimentoMessaggioDesign.php" class="more"> Vedi <span class="mif-arrow-right"></span></a>
                     </div>
                 </div>
                 

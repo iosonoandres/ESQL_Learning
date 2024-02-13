@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/root/connect.php'; // Collegamento con il connect
+require_once __DIR__ . '/root/connect.php'; 
 
 function attempt_login($pdo, $email, $password) {
     try {
@@ -9,28 +9,33 @@ function attempt_login($pdo, $email, $password) {
         $stmt->bindParam(1, $email, PDO::PARAM_STR);
         $stmt->bindParam(2, $password, PDO::PARAM_STR);
         $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $isValidLogin = $stmt->fetchColumn(); 
+
+        if (!$isValidLogin) {
+            return false; 
+        }
+
+        $_SESSION['user'] = [
+            'logged' => true,
+            'email' => $email, 
+        ];
+
+        return true;  
     } catch (PDOException $e) {
         error_log('Errore di login: ' . $e->getMessage());
-        return null; // o gestire l'errore in modo diverso
+        return false;
     }
 }
 
-$loginError = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST["email"];
     $password = $_POST["password"];
-    $output = attempt_login($pdo, $email, $password);
 
-    if ($output) {
-        $_SESSION['user'] = [
-            'logged' => true,
-            'nome' => $output['NOME'],
-            'tipoAccount' => $output['TIPO_ACCOUNT'],
-        ];
+    if (attempt_login($pdo, $email, $password)) {
         echo '<script>alert("Accesso eseguito con successo!"); window.location.href = "dashboard.php";</script>';
         exit();
     } else {
-        $loginError = "Email o password errata.";
+        $loginError = "Errore durante l'accesso. Assicurati che tutti i dati di accesso siano corretti."; 
     }
 }
+?>
