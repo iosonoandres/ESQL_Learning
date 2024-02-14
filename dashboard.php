@@ -45,12 +45,12 @@ $_SESSION['tipoAccount']= "UTENTE_STANDARD"
                 <div class="cell-2 offset-2 pt-30">
                     <div class="more-info-box bg-blue fg-white">
                         <div class="content">
-                            <h2 class="text-bold mb-0"><?php echo "6666666666"; ?></h2>
+                            <h2 class="text-bold mb-0"><?php echo "Inserimento Test"; ?></h2>
                         </div>
                         <div class="icon">
                             <span class="mif-list-numbered"></span>
                         </div>
-                        <a href="./selezione_sondaggio.php" class="more"> Vedi <span class="mif-arrow-right"></span></a>
+                        <a href="testDesign.php" class="more"> Vedi <span class="mif-arrow-right"></span></a>
                     </div>
                 </div>
                 

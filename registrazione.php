@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($tipologiaUtente === "Studente") {
 
-        
+
         $nomeStudente = $_POST["nomeStudente"];
         $cognomeStudente = $_POST["cognomeStudente"];
         $telefonoStudente = $_POST["telefonoStudente"];
@@ -65,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bindParam(5, $telefono, PDO::PARAM_STR);
         $stmt->bindParam(6, $annoImmatricolazione, PDO::PARAM_STR);
         $stmt->bindParam(7, $inputCodice, PDO::PARAM_STR);
-      
+
 
         if ($stmt->execute()) {
 
@@ -103,6 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 ?>
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <title>REGISTRAZIONE</title>
     <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -114,64 +115,67 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 </head>
+
 <body>
-<div class="container">
-    <h1><b>REGISTRAZIONE UTENTE</b></h1>
-    <form action="registrazione.php" method="POST" id="registrationForm">
 
-        <label for="email">Email:</label>
-        <input type="email" name="email" class="form-control" required>
+    <div class="container">
+        <h1><b>REGISTRAZIONE UTENTE</b></h1>
+        <form action="registrazione.php" method="POST" id="registrationForm">
 
-        <label for="password">Password:</label>
-        <input type="password" name="password" class="form-control" required>
+            <label for="email">Email:</label>
+            <input type="email" name="email" class="form-control" required>
 
-        <label for="tipologiaUtente">Tipologia:</label>
-        <select name="tipologiaUtente" required id="userTypeSelect" class="form-control">
-            <option value="Studente">Studente</option>
-            <option value="Docente">Docente</option>
-        </select>
+            <label for="password">Password:</label>
+            <input type="password" name="password" class="form-control" required>
 
-        <div id="studenteFields" class="form-group" style="display: none;">
-            <label for="nomeStudente">Nome:</label>
-            <input type="text" name="nomeStudente" class="form-control" required>
+            <label for="tipologiaUtente">Tipologia:</label>
+            <select name="tipologiaUtente" required id="userTypeSelect" class="form-control">
+                <option value="Studente">Studente</option>
+                <option value="Docente">Docente</option>
+            </select>
 
-            <label for="cognomeStudente">Cognome:</label>
-            <input type="text" name="cognomeStudente" class="form-control" required>
+            <div id="studenteFields" class="form-group" style="display: none;">
+                <label for="nomeStudente">Nome:</label>
+                <input type="text" name="nomeStudente" class="form-control" required>
 
-            <label for="telefonoStudente">Numero di telefono:</label>
-            <input type="text" name="telefonoStudente" class="form-control" required>
+                <label for="cognomeStudente">Cognome:</label>
+                <input type="text" name="cognomeStudente" class="form-control" required>
 
-            <label for="annoImmatricolazione">Anno di Immatricolazione:</label>
-            <input type="date" name="annoImmatricolazione" class="form-control" required>
+                <label for="telefonoStudente">Numero di telefono:</label>
+                <input type="text" name="telefonoStudente" class="form-control" required>
 
-            <label for="inputCodice">Codice Studente:</label>
-            <input type="text" name="inputCodice" class="form-control" required>
+                <label for="annoImmatricolazione">Anno di Immatricolazione:</label>
+                <input type="date" name="annoImmatricolazione" class="form-control" required>
 
-            
-        </div>
+                <label for="inputCodice">Codice Studente:</label>
+                <input type="text" name="inputCodice" class="form-control" required>
 
-        <div id="docenteFields" class="form-group" style="display: none;">
-            <label for="nomeDocente">Nome Docente:</label>
-            <input type="text" name="nomeDocente" id="codiceFiscale" class="form-control" pattern="[0-9]{8}" title="Inserici 8 cifre" required>
 
-            <label for="cognomeDocente">Cognome Docente:</label>
-            <input type="text" name="cognomeDocente" class="form-control" required>
+            </div>
 
-            <label for="telefonoDocente">Telefono Docente:</label>
-            <input type="text" name="sede" class="form-control" required>
+            <div id="docenteFields" class="form-group" style="display: none;">
+                <label for="nomeDocente">Nome Docente:</label>
+                <input type="text" name="nomeDocente" class="form-control" required>
 
-            <label for="inputCorso">Input Corso:</label>
-            <input type="text" name="inputCorso" class="form-control" required>
+                <label for="cognomeDocente">Cognome Docente:</label>
+                <input type="text" name="cognomeDocente" class="form-control" required>
 
-            <label for="inputDipartimento">Input Dipartimento:</label>
-            <input type="text" name="inputDipartimento" class="form-control" required>
+                <label for="telefonoDocente">Telefono Docente:</label>
+                <input type="text" name="sede" class="form-control" required>
 
-        </div>
+                <label for="inputCorso">Input Corso:</label>
+                <input type="text" name="inputCorso" class="form-control" required>
 
-        <input type="submit" class="btn btn-primary" value="Register">
-    </form>
-</div>
+                <label for="inputDipartimento">Input Dipartimento:</label>
+                <input type="text" name="inputDipartimento" class="form-control" required>
+
+            </div>
+
+            <input type="submit" class="btn btn-primary" value="Register">
+        </form>
+    </div>
 </body>
+
 </html>
 
 
@@ -224,9 +228,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
 <style>
-    body{
-        background-color: #222;
+    body {
+        background-color: #FFFFFF;
     }
+
     .container {
         max-width: 600px;
         margin: 50px auto;
@@ -261,51 +266,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         font-size: 18px;
     }
 
+    /* Rende gli input, i select, e i button con angoli più arrotondati */
     input[type="email"],
     input[type="password"],
-    select {
-        width: 100%;
-        padding: 12px;
-        margin-bottom: 20px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-        font-size: 18px;
-    }
-
-    select {
-        appearance: auto;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        background-image: url('data:image/svg+xml;utf8,<svg fill="#000000" height="24" width="24" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 64 64"><path d="M62,11c0-4.8-3.2-9-8-9H10C4.4,2,0,6.4,0,12v40c0,5.6,4.4,10,10,10h44c5.6,0,10-4.4,10-10V11z M11,4h42c3.3,0,6,2.7,6,6v38 c0,3.3-2.7,6-6,6H11c-3.3,0-6-2.7-6-6V10C5,6.7,7.7,4,11,4z M53,54c0,2.2-1.8,4-4,4H11c-2.2,0-4-1.8-4-4V12c0-2.2,1.8-4,4-4h42 c2.2,0,4,1.8,4,4V54z"/><path d="M33.8,46.8c-0.2,0.2-0.5,0.2-0.7,0L27,41.4c-0.2-0.2-0.2-0.5,0-0.7s0.5-0.2,0.7,0l4.3,4.3l4.3-4.3c0.2-0.2,0.5-0.2,0.7,0 s0.2,0.5,0,0.7L36,46.1L40.3,50.4c0.2,0.2,0.2,0.5,0,0.7c-0.2,0.2-0.5,0.2-0.7,0L36,47.9l-4.3,4.3c-0.2,0.2-0.5,0.2-0.7,0 c-0.2-0.2-0.2-0.5,0-0.7L35,46.1L30.7,41.8C30.5,41.6,30.5,41.3,30.7,41c0.2-0.2,0.5-0.2,0.7,0l4.3,4.3l4.3-4.3c0.2-0.2,0.5-0.2,0.7,0 c0.2,0.2,0.2,0.5,0,0.7L38,46.1L42.3,50.4c0.2,0.2,0.2,0.5,0,0.7c-0.2,0.2-0.5,0.2-0.7,0L38,47.9L33.8,46.8z"/></svg>');
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        background-size: 24px;
-    }
-
+    select,
+    input[type="text"],
+    input[type="date"],
     input[type="submit"] {
-        background-color: #222;
-        color: #fff;
-        font-size: 18px;
+        border-radius: 20px;
+        /* Aumenta per angoli più arrotondati */
+    }
+
+    /* Personalizza ulteriormente i button */
+    input[type="submit"] {
+        background-color: #007bff;
+        /* Colore primario di Bootstrap */
         border: none;
-        border-radius: 4px;
-        padding: 16px 24px;
-        cursor: pointer;
-        transition: background-color 0.3s;
+        padding: 10px 20px;
+        /* Aumenta il padding per un aspetto più grande */
+        font-size: 18px;
+        transition: background-color 0.2s ease-in-out;
     }
 
-    input[type="submit"]:hover {
-        background-color: #357ae8;
+    input[type="submit"]:hover,
+    input[type="submit"]:focus {
+        background-color: #0056b3;
+        /* Colore più scuro al passaggio del mouse e al focus */
+        color: #ffffff;
     }
 
-    select::-ms-expand {
-        display: none;
+    /* Stile per il container e il form per adattarsi meglio al design moderno */
+    .container {
+        border-radius: 25px;
+        /* Angoli arrotondati per il container */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        /* Ombra leggera per profondità */
     }
 
-    @media (max-width: 600px) {
-        form {
-            width: 80%;
-            margin: 0 auto;
+    /* Adatta il form al design mobile-first */
+    @media (max-width: 768px) {
+        .container {
+            padding: 20px;
+            margin: 20px auto;
+            /* Maggior spazio sui lati su schermi piccoli */
         }
     }
 </style>

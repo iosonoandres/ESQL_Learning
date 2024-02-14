@@ -62,7 +62,7 @@ CREATE TABLE dbESQL.INTEGRITA_REFERENZIALE (
 CREATE TABLE dbESQL.TEST (
     titolo VARCHAR(255) PRIMARY KEY,
     data DATETIME,
-    foto BLOB,
+    foto MEDIUMBLOB,
     visualizzaRisposte BOOLEAN default false,
     emailDocente VARCHAR(255),
     FOREIGN KEY (emailDocente) REFERENCES DOCENTE(email)
@@ -441,10 +441,10 @@ END ££
 DELIMITER ££
 CREATE PROCEDURE dbESQL.ISCRIZIONE_DOCENTE(
     IN inputEmail VARCHAR(255),
+    IN inputPassword VARCHAR(50),
     IN inputNome VARCHAR(255),
     IN inputCognome VARCHAR(255),
     IN inputTelefono INT,
-    IN inputPassword VARCHAR(50),
     IN inputCorso varchar(255),
     IN inputDipartimento VARCHAR(255)
 )
@@ -463,7 +463,7 @@ BEGIN
         VALUES (inputEmail, inputPassword, 'docente');
 
         -- Inserimento dello studente nella tabella STUDENTE
-        INSERT INTO dbESQL.DOCENTE (email, corso, dipartimento) VALUES (inputEmail, inputCorso,inputDipartimeno);
+        INSERT INTO dbESQL.DOCENTE (email, corso, dipartimento) VALUES (inputEmail, inputCorso,inputDipartimento);
     END IF;
 END ££
 
@@ -699,7 +699,7 @@ DELIMITER ;
 
 DELIMITER $$
 CREATE PROCEDURE dbESQL.CreazioneNuovoTest(IN input_emailDocente VARCHAR(255),IN input_titolo VARCHAR(255),IN input_data DATETIME,
-IN input_foto BLOB)
+IN input_foto MEDIUMBLOB)
 BEGIN
     IF input_emailDocente IN (SELECT email FROM DOCENTE) THEN
         INSERT INTO TEST (titolo, data, foto, emailDocente)

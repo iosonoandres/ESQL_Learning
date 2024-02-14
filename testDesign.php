@@ -1,3 +1,22 @@
+<?php 
+session_start();
+require_once __DIR__ . '/root/connect.php';
+
+function getTipoUtente($email) {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT TIPO_ACCOUNT FROM ACCOUNT WHERE EMAIL_ACCOUNT = :email");
+    $stmt->execute(['email' => $email]);
+    return $stmt->fetchColumn();
+}
+$tipoUtente = isset($_SESSION['user']['email']) ? getTipoUtente($_SESSION['user']['email']) : null;
+
+
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    require 'testLogica.php';
+}
+?>
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -39,7 +58,7 @@
     <body>
         <h1>Inserimento Test</h1>
         <!-- Sezione Creazione Test -->
-    <form id="creaTestForm" method="POST" action="gestioneInserimentoTest.php" enctype="multipart/form-data">
+    <form id="creaTestForm" method="POST" action="testLogica.php" enctype="multipart/form-data">
         <label for="emailDocente">Email Docente:</label>
         <input type="email" name="emailDocente" id="emailDocente" required>
 
@@ -52,17 +71,34 @@
         <label for="fotoTest">Foto del Test (BLOB):</label>
         <input type="file" name="fotoTest" id="fotoTest" accept="image/*" required>
 
-        <label for="visualizzaRisposte">Visualizza Risposte:</label>
-        <select name="visualizzaRisposte" id="visualizzaRisposte" required>
-            <option value="1">Sì</option>
-            <option value="0">No</option>
-        </select>
-
+       
         <button type="submit" name="azione" value="creaTest">Crea Test</button>
     </form>
 
     <hr>
 
-    <!-- Altri elementi UI a tua scelta -->
+    <!-- 
+        
+    QUESTA PARTE DA VALUTARE
+
+    
+     <label for="visualizzaRisposte">Visualizza Risposte:</label>
+        <select name="visualizzaRisposte" id="visualizzaRisposte" required>
+            <option value="1">Sì</option>
+            <option value="0">No</option>
+        </select>
+
+
+
+
+
+    
+    Altri elementi UI DA INSERIRE
+
+
+
+
+
+-->
     </body>
 </html>

@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 require_once __DIR__ . '/root/connect.php'; // Collegamento con il connect
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -25,17 +27,16 @@ function gestisciCreazioneTest($pdo) {
     $titoloTest = $_POST['titoloTest'];
     $dataTest = $_POST['dataTest'];
     $fotoTest = file_get_contents($_FILES['fotoTest']['tmp_name']);
-    $visualizzaRisposte = $_POST['visualizzaRisposte'];
+    //$visualizzaRisposte = $_POST['visualizzaRisposte']; DA VERIFICARE
 
     // Esegui la procedura per la creazione del test
     try {
-        $sql = "CALL CreazioneNuovoTest(?, ?, ?, ?, ?)";
+        $sql = "CALL CreazioneNuovoTest(?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(1, $emailDocente, PDO::PARAM_STR);
         $stmt->bindParam(2, $titoloTest, PDO::PARAM_STR);
         $stmt->bindParam(3, $dataTest, PDO::PARAM_STR);
         $stmt->bindParam(4, $fotoTest, PDO::PARAM_LOB);
-        $stmt->bindParam(5, $visualizzaRisposte, PDO::PARAM_INT);
         $stmt->execute();
         $stmt->closeCursor();
 
