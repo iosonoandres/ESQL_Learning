@@ -127,6 +127,10 @@ function getSelectTest()
 
 
             <form method="post" action="inserimentoMessaggioLogic.php">
+
+                <!-- Campo nascosto per specificare l'azione -->
+                <input type="hidden" name="azione" value="inserisciCommento">
+
                 <div class="form-group">
                     <label for="titolo">Titolo del Commento:</label>
                     <input type="text" class="form-control" name="titolo" id="titolo" required>

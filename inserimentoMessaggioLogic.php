@@ -4,12 +4,20 @@ session_start();
 // Assicurati che il file di connessione al database sia incluso
 require_once __DIR__ . '/root/connect.php';
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+
+
+
+
 function getTipoUtente($email)
 {
     global $pdo;
     $stmt = $pdo->prepare("SELECT TIPO_ACCOUNT FROM ACCOUNT WHERE EMAIL_ACCOUNT = :email");
     $stmt->execute(['email' => $email]);
     return $stmt->fetchColumn();
+    
 }
 
 
@@ -22,6 +30,7 @@ if (!isset($_SESSION['user']['email'])) {
 $tipoUtente = getTipoUtente($_SESSION['user']['email']);
 
 if (isset($_POST['azione'])) {
+    
     if ($_POST['azione'] == 'inserisciCommento' && $tipoUtente === 'studente') {
         $titolo = $_POST['titolo']; // Assumi che questo campo sia presente nel form per gli studenti.
         $testo = $_POST['testo'];
