@@ -99,8 +99,12 @@ function getSelectTest()
 
             <!-- DOCENTE OVVIAMENTE -->
 
-
             <form method="post" action="inserimentoMessaggioLogic.php">
+
+
+                <!-- Campo nascosto per specificare l'azione -->
+                <input type="hidden" name="azione" value="inserisciQuesito">
+
                 <div class="form-group">
                     <label for="titolo">Titolo:</label>
                     <input type="text" class="form-control" name="titolo" id="titolo" required>
@@ -119,8 +123,10 @@ function getSelectTest()
 
 
 
-                <button type="submit" name="inserisciQuesito" class="btn btn-primary">Inserisci quesito</button>
+                <button type="submit" name="inserisciQuesito" class="btn btn-primary">Inserisci risposta Docente</button>
             </form>
+
+
         <?php elseif ($tipoUtente === 'studente') : ?>
 
             <!-- STUDENTI OVVIAMENTE -->

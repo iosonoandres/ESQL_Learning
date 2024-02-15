@@ -17,7 +17,6 @@ function getTipoUtente($email)
     $stmt = $pdo->prepare("SELECT TIPO_ACCOUNT FROM ACCOUNT WHERE EMAIL_ACCOUNT = :email");
     $stmt->execute(['email' => $email]);
     return $stmt->fetchColumn();
-    
 }
 
 
@@ -30,7 +29,7 @@ if (!isset($_SESSION['user']['email'])) {
 $tipoUtente = getTipoUtente($_SESSION['user']['email']);
 
 if (isset($_POST['azione'])) {
-    
+
     if ($_POST['azione'] == 'inserisciCommento' && $tipoUtente === 'studente') {
         $titolo = $_POST['titolo']; // Assumi che questo campo sia presente nel form per gli studenti.
         $testo = $_POST['testo'];
@@ -60,7 +59,36 @@ if (isset($_POST['azione'])) {
             exit();
         }
     }
+
+    // Gestione dell'invio del quesito da parte del docente
+    if ($_POST['azione'] == 'inserisciQuesito' && $tipoUtente === 'docente') {
+        $titolo = $_POST['titolo'];
+        $testo = $_POST['testo'];
+        $titoloTest = $_POST['titoloTest']; // Assumo che anche il docente selezioni un test associato
+        $emailDocente = $_SESSION['user']['email']; // Email del docente dalla sessione
+
+        try {
+            $stmt = $pdo->prepare("CALL dbESQL.InserisciMessaggioDocente(?, ?, ?, ?)");
+            $stmt->execute([
+                $titolo,
+                $testo,
+                $titoloTest,
+                $emailDocente
+            ]);
+
+            $_SESSION['message'] = 'Risposta inserita correttamente!';
+            header('Location: inserimentoMessaggioDesign.php');
+            exit();
+        } catch (PDOException $e) {
+            error_log('Errore nell\'inserimento del quesito: ' . $e->getMessage());
+            $_SESSION['error'] = 'Errore nell\'inserimento della risposta. Si prega di riprovare.';
+            header('Location: inserimentoMessaggioDesign.php');
+            exit();
+        }
+    }
 }
+
+
 
 
 
