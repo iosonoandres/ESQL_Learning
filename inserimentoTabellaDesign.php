@@ -56,6 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <!-- Sezione Creazione Tabella -->
     <form id="creaTabellaForm" method="POST" action="inserimentoTabellaLogica.php">
+        <!-- Campo nascosto per specificare l'azione -->
+        <input type="hidden" name="azione" value="gestisciCreazioneTabella">
+
         <label for="nomeTabella">Nome Tabella:</label>
         <input type="text" name="nomeTabella" id="nomeTabella" required>
 
