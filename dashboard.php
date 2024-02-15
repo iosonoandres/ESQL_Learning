@@ -107,7 +107,7 @@ $features = [
             /* Allinea a sinistra */
             width: 100%;
             /* Larghezza completa */
-            background-color: #ffdab9;
+            background-color: #f0ffff;
             /* Colore di sfondo per l'area cliccabile */
             text-align: center;
             /* Centra il testo */
@@ -143,7 +143,7 @@ $features = [
     <div class="grid">
         <?php foreach ($features as $feature) : ?>
             <div class="cell">
-                <div class="more-info-box <?= $feature[2] ? '' : 'not-implemented' ?>" style="background-color: <?= $feature[2] ? '#ffdab9' : '#dc3545' ?>">
+                <div class="more-info-box <?= $feature[2] ? '' : 'not-implemented' ?>" style="background-color: <?= $feature[2] ? '#f0ffff' : '#dc3545' ?>">
                     <div class="content">
                         <h2 class="text-bold mb-0"><?= $feature[0] ?></h2>
                     </div>

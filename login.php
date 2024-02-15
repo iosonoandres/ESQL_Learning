@@ -24,7 +24,7 @@
     <style>
         body {
             font-family: 'Open Sans', Arial, sans-serif;
-            background-color: #f7f7f7;
+            background-image: url('design/462749.jpg');
             color: #565656;
         }
 

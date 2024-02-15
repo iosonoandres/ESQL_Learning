@@ -22,7 +22,7 @@
 
         #intro {
             height: 100vh;
-            background-image: url('https://blog.testproject.io/wp-content/uploads/2021/02/Alans-picture.jpg');
+            background-image: url('design/pexels-olia-danilevich-5088017.jpg');
             background-size: cover;
             background-position: center;
             text-align: center;
