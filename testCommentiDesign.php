@@ -63,9 +63,11 @@ unset($_SESSION['testDisponibili'], $_SESSION['messaggiSelezionati']);
                             <h5 class="card-title"><?= htmlspecialchars($messaggio['titolo']) ?></h5>
                             <p class="card-text"><?= nl2br(htmlspecialchars($messaggio['testo'])) ?></p>
                             <p class="text-muted">Tipo: <?= $messaggio['tipo'] ?></p>
+                            <p class="text-muted">Email mittente: <?= !empty($messaggio['emailStudenteMittente']) ? htmlspecialchars($messaggio['emailStudenteMittente']) : (!empty($messaggio['emailDocenteMittente']) ? htmlspecialchars($messaggio['emailDocenteMittente']) : 'Nessuna email disponibile') ?></p>
                         </div>
                     </div>
                 <?php endforeach; ?>
+
             </div>
         <?php endif; ?>
     </div>

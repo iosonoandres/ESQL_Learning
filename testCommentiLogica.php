@@ -27,7 +27,6 @@ function getMessaggiPerTest($titoloTest)
                 data, 
                 emailStudenteMittente, 
                 emailDocenteMittente, 
-                emailDocenteDestinatario,
                 CASE
                     WHEN emailStudenteMittente IS NOT NULL THEN 'Studente'
                     WHEN emailDocenteMittente IS NOT NULL THEN 'Docente'
@@ -44,6 +43,7 @@ function getMessaggiPerTest($titoloTest)
         return [];
     }
 }
+
 
 
 
