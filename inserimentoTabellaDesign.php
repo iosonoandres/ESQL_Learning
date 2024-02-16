@@ -5,9 +5,8 @@ function getTipoUtente($email) {
     $stmt->execute(['email' => $email]);
     return $stmt->fetchColumn();
 }
+
 $tipoUtente = isset($_SESSION['user']['email']) ? getTipoUtente($_SESSION['user']['email']) : null;
-
-
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     require 'inserimentoTabellaLogica.php';
@@ -15,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 ?>
 
 <!DOCTYPE html>
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <h1>Creazione Tabella di Esercizio</h1>
 
     <!-- Sezione Creazione Tabella -->
-    <form id="creaTabellaForm" method="POST" action="inserimentoTabellaLogica.php">
+    <form id="creaTabellaForm" method="POST" action="">
         <!-- Campo nascosto per specificare l'azione -->
         <input type="hidden" name="azione" value="gestisciCreazioneTabella">
 
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <label for="emailDocente">Email Docente:</label>
         <input type="email" name="emailDocente" id="emailDocente" required>
 
-        <label for="metaDati">Metadati (attributo1#tipo1#primaria# ...):</label>
+        <label for="metaDati">Metadati (LO SPAZIO SI USA SOLO TRA ATTRIBUTO PRECEDENTE E SUCCESSIVO id#INT#true# nome#char#false# anni#INT#false#):</label>
         <textarea name="metaDati" id="metaDati" rows="4" required></textarea>
 
         <label for="integritaReferenziale">Integrità Referenziale (attrib1#attrib2#tab2# ...):</label>
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <!-- Sezione Inserimento Riga -->
     <h2>Inserimento Riga in Tabella Esercizio</h2>
 
-    <form id="inserisciRigaForm" method="POST" action="inserimentoTabellaLogica.php">
+    <form id="inserisciRigaForm" method="POST" action="">
         <label for="inputRiga">Attributi della Riga (separati da #):</label>
         <input type="text" name="inputRiga" id="inputRiga" required placeholder="Esempio: 1#Cavallo#Girolamo">
 
@@ -95,9 +95,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <button type="submit" name="azione" value="inserisciRiga">Inserisci Riga</button>
     </form>
 
-    <script>
-        // Aggiungi le funzioni JavaScript necessarie per gestire l'inserimento di una riga
-        // ...
-    </script>
 </body>
 </html>
