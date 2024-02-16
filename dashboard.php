@@ -9,7 +9,8 @@ $features = [
     ["not-implemented", "inserimentoTabellaDesign.php", true],
     ["Svolgimento test", "svolgimentoTestDesign.php", true],
     ["Creazione quesito", "creazioneQuesitoDesign.php",true],
-    ["Inserimento quesito","da cambiare",false]
+    ["Inserimento quesito","da cambiare",false], 
+    ["Visuale Statistiche", "statisticheDesign.php",true]
     // Altre funzionalità vanno qui...
 ];
 ?>

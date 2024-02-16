@@ -1,4 +1,5 @@
 <?php
+// inserimentoMessaggioLogica.php
 session_start();
 
 // Assicurati che il file di connessione al database sia incluso
