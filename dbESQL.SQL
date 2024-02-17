@@ -523,7 +523,7 @@ CREATE PROCEDURE dbESQL.InserisciTabellaDiEsercizio(
     -- Esempio di formato: "attributo1#tipo1#primaria# " 
 		
 	-- LO SPAZIO SI USA SOLO TRA ATTRIBUTO PRECEDENTE E SUCCESSIVO
-      #ATTENTI! AL POSTO DI PRIMARIA CI VA TRUE O FALSE
+    -- ATTENTI! AL POSTO DI PRIMARIA CI VA TRUE O FALSE
       
     /*'id#INT#true# nome#char#false# anni#INT#false#'*/
     
@@ -531,7 +531,7 @@ CREATE PROCEDURE dbESQL.InserisciTabellaDiEsercizio(
     IN integritaReferenziale TEXT -- Una stringa che contiene i vincoli di integrità referenziale separati da #
     
     -- 'attrib1#attrib2#tab2#'
-    #dove attrib1->attrib2 di tabella2
+    -- dove attrib1->attrib2 di tabella2
    
 )
 BEGIN

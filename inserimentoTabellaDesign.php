@@ -1,4 +1,11 @@
 <?php
+// inserimentoTabellaDesign
+
+session_start();
+// Assicurati che il file di connessione al database sia incluso
+require_once __DIR__ . '/root/connect.php';
+
+
 function getTipoUtente($email) {
     global $pdo;
     $stmt = $pdo->prepare("SELECT TIPO_ACCOUNT FROM ACCOUNT WHERE EMAIL_ACCOUNT = :email");
@@ -21,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Creazione Tabella di Esercizio</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+        font-family: Arial, sans-serif;
+        margin: 20px;
         }
 
         form {
@@ -49,29 +56,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin: 20px 0;
             border: 1px solid #ccc;
         }
+
+        /* Stile per l'input email in modalità readonly */
+        input:read-only {
+            background-color: #f2f2f2; /* Grigio chiaro */
+        }
     </style>
+
 </head>
 <body>
     <h1>Creazione Tabella di Esercizio</h1>
 
     <!-- Sezione Creazione Tabella -->
     <form id="creaTabellaForm" method="POST" action="">
-        <!-- Campo nascosto per specificare l'azione -->
-        <input type="hidden" name="azione" value="gestisciCreazioneTabella">
+    <!-- Campo nascosto per specificare l'azione -->
+    <input type="hidden" name="azione" value="gestisciCreazioneTabella">
 
-        <label for="nomeTabella">Nome Tabella:</label>
-        <input type="text" name="nomeTabella" id="nomeTabella" required>
+    <label for="nomeTabella">Nome Tabella:</label>
+    <input type="text" name="nomeTabella" id="nomeTabella" required>
 
-        <label for="emailDocente">Email Docente:</label>
-        <input type="email" name="emailDocente" id="emailDocente" required>
+    <label for="emailDocente">Email Docente:</label>
+    <input type="email" name="emailDocente" id="emailDocente" value="<?= isset($_SESSION['user']['email']) ? $_SESSION['user']['email'] : '' ?>" readonly required>
 
-        <label for="metaDati">Metadati (LO SPAZIO SI USA SOLO TRA ATTRIBUTO PRECEDENTE E SUCCESSIVO id#INT#true# nome#char#false# anni#INT#false#):</label>
-        <textarea name="metaDati" id="metaDati" rows="4" required></textarea>
+    <label for="metaDati">Metadati (LO SPAZIO SI USA SOLO TRA ATTRIBUTO PRECEDENTE E SUCCESSIVO id#INT#true# nome#char#false# anni#INT#false#):</label>
+    <textarea name="metaDati" id="metaDati" rows="4" required></textarea>
 
-        <label for="integritaReferenziale">Integrità Referenziale (attrib1#attrib2#tab2# ...):</label>
-        <textarea name="integritaReferenziale" id="integritaReferenziale" rows="4"></textarea>
+    <label for="integritaReferenziale">Integrità Referenziale (attrib1#attrib2#tab2# ...):</label>
+    <textarea name="integritaReferenziale" id="integritaReferenziale" rows="4"></textarea>
 
-        <button type="submit" name="azione" value="creaTabella">Crea Tabella</button>
+    <button type="submit" name="azione" value="creaTabella">Crea Tabella</button>
     </form>
 
     <hr>
@@ -83,8 +96,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <label for="inputRiga">Attributi della Riga (separati da #):</label>
         <input type="text" name="inputRiga" id="inputRiga" required placeholder="Esempio: 1#Cavallo#Girolamo">
 
-        <label for="nomeTabellaRiga">Nome Tabella:</label>
-        <input type="text" name="nomeTabellaRiga" id="nomeTabellaRiga" required>
+        <label for="nomeTabella">Nome Tabella:</label>
+        <input type="text" name="nomeTabella" id="nomeTabella" required>
 
         <label for="emailDocenteRiga">Email Docente:</label>
         <input type="email" name="emailDocenteRiga" id="emailDocenteRiga" required>

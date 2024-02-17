@@ -161,7 +161,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <input type="text" name="cognomeDocente" class="form-control" required>
 
                 <label for="telefonoDocente">Telefono Docente:</label>
-                <input type="text" name="sede" class="form-control" required>
+                <input type="text" name="telefonoDocente" class="form-control" required>
 
                 <label for="inputCorso">Input Corso:</label>
                 <input type="text" name="inputCorso" class="form-control" required>

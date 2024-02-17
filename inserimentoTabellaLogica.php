@@ -1,62 +1,89 @@
 <?php
-session_start();
 
-require_once __DIR__ . '/root/connect.php'; // Collegamento con il connect
+require_once __DIR__ . '/root/connect.php';
 
-
-
-
-function gestisciCreazioneTabella() {
-    // Recupera i dati inviati dal form
+function inserisciTabellaEsercizio($inputNomeTabella, $inputEmailDocente, $metaDati, $integritaReferenziale) {
     global $pdo;
-    $nomeTabella = $_POST['nomeTabella'];
-    $emailDocente = $_POST['emailDocente'];
-    $metaDati = $_POST['metaDati'];
-    $integritaReferenziale = $_POST['integritaReferenziale'];
 
-    // Esegui la procedura per la creazione della tabella
+    // Assuming the session contains the user's email
+    $emailDocente = isset($_SESSION['user']['email']) ? $_SESSION['user']['email'] : '';
+
     try {
-        $sql = "CALL InserisciTabellaDiEsercizio(?, ?, ?, ?)";
-        $stmt = $pdo->prepare($sql);        
-        $stmt->bindParam(1, $nomeTabella, PDO::PARAM_STR);
+        // Prepare the SQL statement to call the stored procedure
+        $stmt = $pdo->prepare("CALL InserisciTabellaDiEsercizio(?, ?, ?, ?)");
+
+        // Bind parameters
+        $stmt->bindParam(1, $inputNomeTabella, PDO::PARAM_STR);
         $stmt->bindParam(2, $emailDocente, PDO::PARAM_STR);
         $stmt->bindParam(3, $metaDati, PDO::PARAM_STR);
         $stmt->bindParam(4, $integritaReferenziale, PDO::PARAM_STR);
+
+        // Execute the stored procedure
         $stmt->execute();
+
+        // Fetch the result (assuming it returns a single row with a 'Messaggio' field)
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Close the statement
         $stmt->closeCursor();
 
-        // Output o redirect a seconda della necessità
-        echo "Tabella creata con successo!";
+        // Return the result
+        return $result['Messaggio'];
     } catch (PDOException $e) {
-        error_log('Errore nella creazione della tabella: ' . $e->getMessage());
-        echo "Errore nella creazione della tabella. Consulta i log per ulteriori dettagli.";
+        // Handle exceptions here
+        return "Error: " . $e->getMessage();
     }
 }
 
-function gestisciInserimentoRiga() {
-    // Recupera i dati inviati dal form
-    global $pdo;
-    $inputRiga = $_POST['inputRiga'];
-    $nomeTabellaRiga = $_POST['nomeTabellaRiga'];
-    $emailDocenteRiga = $_POST['emailDocenteRiga'];
-    $numAttributiAttesi = $_POST['numAttributiAttesi'];
+// Check if the form is submitted
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Assuming the form fields have specific names, adjust them accordingly
+    $inputNomeTabella = $_POST['nomeTabella'] ?? '';
+    $metaDati = $_POST['metaDati'] ?? '';
+    $integritaReferenziale = $_POST['integritaReferenziale'] ?? '';
 
-    // Esegui la procedura per l'inserimento della riga
+    // Call the function to insert the table
+    $message = inserisciTabellaEsercizio($inputNomeTabella, $emailDocente, $metaDati, $integritaReferenziale);
+
+    // Output the result or handle it as needed
+    echo $message;
+}
+
+function inserisciRigaTabellaEsercizio($inputRiga, $nomeTabella) {
+    global $pdo;
+
     try {
-        $sql = "CALL InserisciRigaTabellaEsercizio(?, ?, ?, ?)";
-        $stmt = $pdo->prepare($sql);
+        // Prepare the SQL statement to call the stored procedure
+        $stmt = $pdo->prepare("CALL InserisciRigaTabellaEsercizio(?, ?)");
+
+        // Bind parameters
         $stmt->bindParam(1, $inputRiga, PDO::PARAM_STR);
-        $stmt->bindParam(2, $nomeTabellaRiga, PDO::PARAM_STR);
-        $stmt->bindParam(3, $emailDocenteRiga, PDO::PARAM_STR);
-        $stmt->bindParam(4, $numAttributiAttesi, PDO::PARAM_INT);
+        $stmt->bindParam(2, $nomeTabella, PDO::PARAM_STR);
+
+        // Execute the stored procedure
         $stmt->execute();
+
+        // Close the statement
         $stmt->closeCursor();
 
-        // Output o redirect a seconda della necessità
-        echo "Riga inserita con successo!";
+        // Assuming the stored procedure doesn't return any specific result, handle success as needed
+        return 'Riga inserita con successo!';
     } catch (PDOException $e) {
-        error_log('Errore nell\'inserimento della riga: ' . $e->getMessage());
-        echo "Errore nell'inserimento della riga. Consulta i log per ulteriori dettagli.";
+        // Handle exceptions here
+        return "Error: " . $e->getMessage();
     }
+}
+
+// Check if the form is submitted
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Assuming the form fields have specific names, adjust them accordingly
+    $inputRiga = $_POST['inputRiga'] ?? '';
+    $nomeTabellaRiga = $_POST['nomeTabellaRiga'] ?? '';
+
+    // Call the function to insert the row
+    $message = inserisciRigaTabellaEsercizio($inputRiga, $nomeTabellaRiga);
+
+    // Output the result or handle it as needed
+    echo $message;
 }
 ?>
