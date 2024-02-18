@@ -1,12 +1,16 @@
 <?php
-
+// inserimetoTabellaLogica.php
 require_once __DIR__ . '/root/connect.php';
+
+function getEmailDocente() {
+    // Assuming the session contains the user's email
+    return isset($_SESSION['user']['email']) ? $_SESSION['user']['email'] : '';
+}
 
 function inserisciTabellaEsercizio($inputNomeTabella, $inputEmailDocente, $metaDati, $integritaReferenziale) {
     global $pdo;
 
-    // Assuming the session contains the user's email
-    $emailDocente = isset($_SESSION['user']['email']) ? $_SESSION['user']['email'] : '';
+    $emailDocente = getEmailDocente();
 
     try {
         // Prepare the SQL statement to call the stored procedure
@@ -37,16 +41,21 @@ function inserisciTabellaEsercizio($inputNomeTabella, $inputEmailDocente, $metaD
 
 // Check if the form is submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Assuming the form fields have specific names, adjust them accordingly
-    $inputNomeTabella = $_POST['nomeTabella'] ?? '';
-    $metaDati = $_POST['metaDati'] ?? '';
-    $integritaReferenziale = $_POST['integritaReferenziale'] ?? '';
+    $emailDocente = getEmailDocente();
+    $azione = $_POST['azione'] ?? '';
 
-    // Call the function to insert the table
-    $message = inserisciTabellaEsercizio($inputNomeTabella, $emailDocente, $metaDati, $integritaReferenziale);
+    if ($azione === 'creaTabella') {
+        // Assuming the form fields have specific names, adjust them accordingly
+        $inputNomeTabella = $_POST['nomeTabella'] ?? '';
+        $metaDati = $_POST['metaDati'] ?? '';
+        $integritaReferenziale = $_POST['integritaReferenziale'] ?? '';
 
-    // Output the result or handle it as needed
-    echo $message;
+        // Call the function to insert the table
+        $message = inserisciTabellaEsercizio($inputNomeTabella, $emailDocente, $metaDati, $integritaReferenziale);
+
+        // Output the result or handle it as needed
+        echo $message;
+    }
 }
 
 function inserisciRigaTabellaEsercizio($inputRiga, $nomeTabella) {
@@ -76,14 +85,18 @@ function inserisciRigaTabellaEsercizio($inputRiga, $nomeTabella) {
 
 // Check if the form is submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Assuming the form fields have specific names, adjust them accordingly
-    $inputRiga = $_POST['inputRiga'] ?? '';
-    $nomeTabellaRiga = $_POST['nomeTabellaRiga'] ?? '';
+    $azione = $_POST['azione'] ?? '';
 
-    // Call the function to insert the row
-    $message = inserisciRigaTabellaEsercizio($inputRiga, $nomeTabellaRiga);
+    if ($azione === 'inserisciRiga') {
+        // Assuming the form fields have specific names, adjust them accordingly
+        $inputRiga = $_POST['inputRiga'] ?? '';
+        $nomeTabellaRiga = $_POST['nomeTabellaRiga'] ?? '';
 
-    // Output the result or handle it as needed
-    echo $message;
+        // Call the function to insert the row
+        $message = inserisciRigaTabellaEsercizio($inputRiga, $nomeTabellaRiga);
+
+        // Output the result or handle it as needed
+        echo $message;
+    }
 }
 ?>
