@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <label for="metaDati">Metadati (LO SPAZIO SI USA SOLO TRA ATTRIBUTO PRECEDENTE E SUCCESSIVO id#INT#true# nome#text#false# anni#INT#false#):</label>
         <textarea name="metaDati" id="metaDati" rows="4" required></textarea>
 
-        <label for="integritaReferenziale">Integrità Referenziale (attrib1#attrib2#tab2#tab1# Lasciare vuota nel caso non ci siano):</label>
+        <label for="integritaReferenziale">Integrità Referenziale (attrib1#attrib2#tab2# Lasciare vuota nel caso non ci siano):</label>
         <textarea name="integritaReferenziale" id="integritaReferenziale" rows="4"></textarea>
 
         <button type="button" onclick="visualizzaInput()">Visualizza Input</button>
