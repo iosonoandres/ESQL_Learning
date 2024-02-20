@@ -1,74 +1,152 @@
 <?php
-session_start();
+
+// Include la classe di connessione per accedere all'oggetto PDO
 require_once __DIR__ . '/root/connect.php';
 
-function getEmailUtente($email) {
-    global $pdo;
-    $stmt = $pdo->prepare("SELECT EMAIL_ACCOUNT FROM ACCOUNT WHERE EMAIL_ACCOUNT = :email");
-    $stmt->execute(['email' => $email]);
-    return $stmt->fetchColumn();
-}
+class SvolgimentoTestLogica {
+    private $pdo;
 
-$emailStudente = isset($_SESSION['user']['email']) ? getEmailUtente($_SESSION['user']['email']) : null;
-
-
-// logica per prendere i quesiti del test dal database per mostrarli su svolgimentoTestDesign.php
-function fetch_question($titoloTest, $ID) {
-    global $pdo;
-    try {
-        $query = "SELECT QUESITO.*
-                  FROM RIFERIMENTO
-                  INNER JOIN QUESITO ON RIFERIMENTO.IDquesito = QUESITO.ID
-                  WHERE RIFERIMENTO.titoloTest = :titoloTest
-                  AND RIFERIMENTO.ID = :ID";
-
-        $stmt = $pdo->prepare($query);
-        $stmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
-        $stmt->bindParam(':ID', $ID, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $quesito = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $quesito;
-
-    } catch (PDOException $e) {
-        echo "Errore nel recupero del quesito: " . $e->getMessage();
-        return null;
+    // Nel costruttore, utilizza l'oggetto PDO globale o passato come parametro
+    public function __construct() {
+        global $pdo;
+        $this->pdo = $pdo;
     }
-}
 
-// logica per salvare risposte ogni volta che studente clicca sul bottone salva risposta sotto al quesito. 
-function save_answer($titoloTest, $idQuesito, $risposta) {
-    global $pdo;
-    try {
-        $data = date('Y-m-d H:i:s');
+    public function getTestDisponibili($emailStudente) {
+        $testDisponibili = [];
+        try {
+            $stmt = $this->pdo->prepare("SELECT t.titolo, t.data 
+                                         FROM TEST t
+                                         LEFT JOIN SVOLGIMENTO s ON t.titolo = s.titoloTest AND s.emailStudente = :emailStudente
+                                         WHERE s.emailStudente IS NULL OR s.stato != 'Concluso'");
+            $stmt->bindParam(':emailStudente', $emailStudente, PDO::PARAM_STR);
+            $stmt->execute();
+            $testDisponibili = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            echo "Errore nel recupero dei test disponibili: " . $e->getMessage();
+        }
+        return $testDisponibili;
+    }
 
-        // Inserisci una nuova risposta generica nella tabella RISPOSTA
-        $query = "INSERT INTO RISPOSTA (data, emailStudente) VALUES (:data, :emailStudente)";
-        $stmt = $pdo->prepare($query);
-        $stmt->bindParam(':data', $data, PDO::PARAM_STR);
-        $stmt->bindParam(':emailStudente', $emailStudente, PDO::PARAM_STR);
-        $stmt->execute();
+    public function getDomandeTest($titoloTest) {
+        $domande = [];
+        try {
+            // Seleziona prima tutte le domande del test
+            $stmt = $this->pdo->prepare("SELECT q.ID, q.descrizione, q.difficoltà, 'codice' AS tipo 
+                                         FROM QUESITO q
+                                         JOIN QUESITO_DI_CODICE qc ON q.ID = qc.ID AND q.titoloTest = qc.titoloTest
+                                         WHERE q.titoloTest = :titoloTest
+                                         UNION ALL
+                                         SELECT q.ID, q.descrizione, q.difficoltà, 'chiusa' AS tipo 
+                                         FROM QUESITO q
+                                         JOIN QUESITO_A_RISPOSTA_CHIUSA qrc ON q.ID = qrc.ID AND q.titoloTest = qrc.titoloTest
+                                         WHERE q.titoloTest = :titoloTest");
+            $stmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
+            $stmt->execute();
+            $domande = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+            // Per ciascuna domanda a risposta chiusa, recupera le opzioni disponibili
+            foreach ($domande as $key => $domanda) {
+                if ($domanda['tipo'] == 'chiusa') {
+                    $stmtOpzioni = $this->pdo->prepare("SELECT Numerazione, testo 
+                                                        FROM OPZIONE 
+                                                        WHERE idQuesitoChiusa = :idQuesito AND titoloTest = :titoloTest");
+                    $stmtOpzioni->bindParam(':idQuesito', $domanda['ID'], PDO::PARAM_INT);
+                    $stmtOpzioni->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
+                    $stmtOpzioni->execute();
+                    $domande[$key]['opzioni'] = $stmtOpzioni->fetchAll(PDO::FETCH_ASSOC);
+                }
+            }
+        } catch (PDOException $e) {
+            echo "Errore nel recupero delle domande: " . $e->getMessage();
+        }
+        return $domande;
+    }
+    
 
-        // Ottieni l'ID della risposta appena inserita
-        $rispostaID = $pdo->lastInsertId();
 
-        // Inserisci la risposta nella tabella corrispondente
-        $query = "INSERT INTO RISPOSTA_GENERICA (data, IDQuesito, titoloTest, emailStudente, risposta) 
-                  VALUES (:data, :idQuesito, :titoloTest, :emailStudente, :risposta)";
-        $stmt = $pdo->prepare($query);
-        $stmt->bindParam(':data', $data, PDO::PARAM_STR);
-        $stmt->bindParam(':idQuesito', $idQuesito, PDO::PARAM_INT);
-        $stmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
-        $stmt->bindParam(':emailStudente', $emailStudente, PDO::PARAM_STR);
-        $stmt->bindParam(':risposta', $risposta, PDO::PARAM_STR);
-        $stmt->execute();
 
-        return true;
+    // Funzione per inserire la risposta chiusa di uno studente
+    public function inserisciRispostaChiusaStudente($emailStudente, $titoloTest, $idQuesito, $opzioneScelta) {
+        try {
+            // Prepara la chiamata alla procedura
+            $stmt = $this->pdo->prepare("CALL dbESQL.InserisciRispostaChiusaStudente(:inputEmailStudente, :inputTitoloTest, :inputIDQuesito, :opzioneScelta)");
 
-    } catch (PDOException $e) {
-        echo "Errore nel salvataggio della risposta: " . $e->getMessage();
+            // Associa i parametri
+            $stmt->bindParam(':inputEmailStudente', $emailStudente, PDO::PARAM_STR);
+            $stmt->bindParam(':inputTitoloTest', $titoloTest, PDO::PARAM_STR);
+            $stmt->bindParam(':inputIDQuesito', $idQuesito, PDO::PARAM_INT);
+            $stmt->bindParam(':opzioneScelta', $opzioneScelta, PDO::PARAM_INT);
+
+            // Esegue la procedura
+            $stmt->execute();
+
+            // La procedura gestisce l'inserimento della risposta, l'aggiornamento dello stato di svolgimento,
+            // la verifica dell'esito della risposta, e l'aggiornamento del numero di risposte al quesito.
+            return true;
+        } catch (PDOException $e) {
+            echo "Errore nell'inserimento della risposta chiusa: " . $e->getMessage();
+            return false;
+        }
+    }
+
+
+    // Funzione per inserire la risposta di codice di uno studente e verificarne l'esito
+    public function inserisciRispostaCodiceStudente($emailStudente, $titoloTest, $idQuesito, $testoRisposta, $tabOutputStudente) {
+        try {
+            // Prepara la chiamata alla procedura
+            $stmt = $this->pdo->prepare("CALL dbESQL.InserisciRispostaCodiceStudente(:inputEmailStudente, :inputTitoloTest, :inputIDQuesito, :inputTestoRisposta, :tabOutputStudente)");
+
+            // Associa i parametri
+            $stmt->bindParam(':inputEmailStudente', $emailStudente, PDO::PARAM_STR);
+            $stmt->bindParam(':inputTitoloTest', $titoloTest, PDO::PARAM_STR);
+            $stmt->bindParam(':inputIDQuesito', $idQuesito, PDO::PARAM_INT);
+            $stmt->bindParam(':inputTestoRisposta', $testoRisposta, PDO::PARAM_STR);
+            $stmt->bindParam(':tabOutputStudente', $tabOutputStudente, PDO::PARAM_STR);
+
+            // Esegue la procedura
+            $stmt->execute();
+
+            // Dopo l'esecuzione, l'esito della risposta (corretta o meno) sarà gestito dalla procedura stessa
+            // e riflettuto nelle modifiche al database (es. aggiornamento della tabella RISPOSTA)
+            return true;
+        } catch (PDOException $e) {
+            echo "Errore nell'inserimento della risposta di codice: " . $e->getMessage();
+            return false;
+        }
+    }
+
+
+
+
+    public function isTestConcludibile($emailStudente, $titoloTest) {
+        try {
+            $stmt = $this->pdo->prepare("SELECT stato 
+                                         FROM SVOLGIMENTO 
+                                         WHERE titoloTest = :titoloTest AND emailStudente = :emailStudente");
+            $stmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
+            $stmt->bindParam(':emailStudente', $emailStudente, PDO::PARAM_STR);
+            $stmt->execute();
+            $risultato = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            // Se non esiste uno svolgimento per questo test e studente, o lo stato è diverso da 'Concluso',
+            // lo studente può svolgere o continuare il test
+            if (!$risultato || $risultato['stato'] !== 'Concluso') {
+                return true;
+            }
+        } catch (PDOException $e) {
+            echo "Errore durante il controllo dello stato del test: " . $e->getMessage();
+        }
         return false;
     }
+    
+
+
+
 }
+
+// Creazione dell'oggetto SvolgimentoTestLogica
+// Passa l'oggetto PDO alla classe per utilizzare la connessione esistente
+$svolgimentoTestLogica = new SvolgimentoTestLogica();
+
 ?>

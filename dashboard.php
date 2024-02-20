@@ -7,7 +7,7 @@ $features = [
     ["Inserimento Messaggio", "inserimentoMessaggioDesign.php", true],
     ["Inserimento Tabella", "inserimentoTabellaDesign.php", true],
     ["not-implemented", "inserimentoTabellaDesign.php", true],
-    ["Svolgimento test", "svolgimentoTestDesign.php", true],
+    ["Svolgimento test", "visualizzaTestDisponibili.php", true],
     ["Creazione quesito", "creazioneQuesitoDesign.php",true],
     ["Inserimento quesito","da cambiare",false], 
     ["Visuale Statistiche", "statisticheDesign.php",true]
