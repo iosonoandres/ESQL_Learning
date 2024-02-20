@@ -179,8 +179,23 @@ function getSelectTest()
                 <button type="submit" name="creaQuesitoCodice" class="btn btn-primary">Crea Quesito di Codice</button>
             </form>
 
-        <?php endif; ?>
+        <?php elseif ($tipoUtente === 'studente') : ?>
+            <style>
+                body {
+                    background-image: url('design/divietovero.jpg');
+                    background-size: cover;
+                    background: position 100px;;
+                }
+            </style>
+            <div class="alert alert-danger" role="alert">
+                Non hai i permessi per accedere a questa pagina.
+            </div>
+            <!-- Qui puoi includere altri contenuti HTML che vuoi mostrare allo studente -->
+        <?php endif ?>
+
+
     </div>
+
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>

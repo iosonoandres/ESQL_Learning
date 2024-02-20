@@ -1,8 +1,6 @@
 <?php
 require 'testCommentiLogica.php'; // Includi la logica per ottenere i dati necessari
 
-session_start();
-
 // Assicurati che il file di connessione al database sia incluso se necessario qui
 require_once __DIR__ . '/root/connect.php';
 
