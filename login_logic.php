@@ -1,8 +1,15 @@
 <?php
+// login_logic.php
 session_start();
 require_once __DIR__ . '/root/connect.php'; 
 
+// Includi la classe LoggerMongo
+require_once __DIR__ . '../root/LoggerMongo.php';
+
 function attempt_login($pdo, $email, $password) {
+    // Inizializza il logger all'esterno del blocco try
+    $logger = new LoggerMongo("mongodb://localhost:27017", "logDB");
+
     try {
         $sql = "CALL LOGIN_ACCOUNT(?, ?)";
         $stmt = $pdo->prepare($sql);
@@ -12,8 +19,17 @@ function attempt_login($pdo, $email, $password) {
         $isValidLogin = $stmt->fetchColumn(); 
 
         if (!$isValidLogin) {
+            // Logga il tentativo di login fallito
+            $logger->logEvent('FailedLoginAttempt', "Tentativo di login fallito per l'utente $email");
+
+            // Mantieni anche il vecchio sistema di logging
+            error_log('Errore di login: Tentativo di login fallito per l\'utente ' . $email);
+            
             return false; 
         }
+
+        // Login riuscito, logga l'evento
+        $logger->logEvent('SuccessfulLogin', "Login eseguito con successo per l'utente $email");
 
         $_SESSION['user'] = [
             'logged' => true,
@@ -22,7 +38,12 @@ function attempt_login($pdo, $email, $password) {
 
         return true;  
     } catch (PDOException $e) {
+        // Logga l'errore di login
+        $logger->logEvent('ErrorLogin', 'Errore di login: ' . $e->getMessage());
+
+        // Mantieni anche il vecchio sistema di logging
         error_log('Errore di login: ' . $e->getMessage());
+        
         return false;
     }
 }

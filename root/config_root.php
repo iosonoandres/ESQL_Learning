@@ -1,5 +1,5 @@
 <?php
-
+//config_root.php
 class config_root
 {
     private $db_server;
@@ -38,6 +38,7 @@ class config_root
     public function getMongoConnection() {
         return $this->db_mongoconnection;
     }
+
 }
 
 ?>
