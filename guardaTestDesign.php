@@ -16,19 +16,16 @@ if (!$titoloTest) {
     exit();
 }
 
-$svolgimentoTestLogica = new SvolgimentoTestLogica();
-$domande = $svolgimentoTestLogica->getDomandeTest($titoloTest);
+$guardaTestLogica = new GuardaTestLogica();
+$domande = $guardaTestLogica->getDomandeTest($titoloTest);
 
-
-function getTipoUtente($email) {
+function getTipoUtente($email)
+{
     global $pdo;
     $stmt = $pdo->prepare("SELECT TIPO_ACCOUNT FROM ACCOUNT WHERE EMAIL_ACCOUNT = :email");
     $stmt->execute(['email' => $email]);
     return $stmt->fetchColumn();
 }
-
-
-
 ?>
 
 <!DOCTYPE html>
@@ -41,28 +38,34 @@ function getTipoUtente($email) {
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <style>
         body {
-            font-family: 'Open Sans', Arial, sans-serif;
-            background-color: #f7f7f7;
-            color: #565656;
+        font-family: 'Open Sans', Arial, sans-serif;
+        background-color: #f7f7f7;
+        color: #565656;
         }
 
         .container {
-            padding: 20px;
-            max-width: 800px;
-            margin: 20px auto;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+        padding: 20px;
+        max-width: 800px;
+        margin: 20px auto;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
         }
 
         .domanda {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border: 1px solid #eee;
-            border-radius: 5px;
+        margin-bottom: 20px;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border: 1px solid #eee;
+        border-radius: 5px;
         }
-    </style>
+
+        .corretta {
+        background-color: rgba(76, 175, 80, 0.3); /* Colore di sfondo verde con opacità 0.8 */
+        color: white; /* Testo bianco per una migliore leggibilità */
+        }
+        </style>
+
 </head>
 
 <body>
@@ -78,12 +81,20 @@ function getTipoUtente($email) {
                 ?>
                     <?php foreach ($domanda['opzioni'] as $opzione) : ?>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="risposta[<?= $domanda['ID'] ?>]" id="opzione<?= $opzione['Numerazione'] ?>" value="<?= $opzione['Numerazione'] ?>" disabled>
-                            <label class="form-check-label" for="opzione<?= $opzione['Numerazione'] ?>">
+                            <?php
+                            $numerazione = $opzione['Numerazione'];
+                            $opzioneCorretta = $opzione['opzioneCorretta'];
+                            $isChecked = (strpos($opzioneCorretta, $numerazione) !== false) ? ' corretta' : '';
+                            ?>
+                            <input class="form-check-input" type="radio" name="risposta[<?= $domanda['ID'] ?>]" id="opzione<?= $numerazione ?>" value="<?= $numerazione ?>" disabled <?= $isChecked ? 'checked' : '' ?>>
+                            <label class="form-check-label <?= $isChecked ? 'corretta' : '' ?>" for="opzione<?= $numerazione ?>">
                                 <?= htmlspecialchars($opzione['testo']) ?>
                             </label>
+
                         </div>
                     <?php endforeach; ?>
+
+
                 <?php endif; ?>
             </div>
         <?php endforeach; ?>
