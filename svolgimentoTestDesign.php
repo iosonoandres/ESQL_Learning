@@ -69,6 +69,7 @@ function getTipoUtente($email) {
     <div class="container">
         <h1 class="mb-4">Svolgi Test: <?= htmlspecialchars($titoloTest) ?></h1>
         <form action="processaRisposteTest.php" method="post">
+            <input type="hidden" name="titoloTest" value="<?= htmlspecialchars($titoloTest) ?>">
             <?php foreach ($domande as $indice => $domanda) : ?>
                 <div class="domanda">
                     <h5>Domanda <?= $indice + 1 ?>: <?= htmlspecialchars($domanda['descrizione']) ?></h5>
@@ -90,6 +91,7 @@ function getTipoUtente($email) {
             <button type="submit" class="btn btn-primary">Invia Risposte</button>
         </form>
     </div>
+
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>

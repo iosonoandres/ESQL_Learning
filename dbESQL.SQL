@@ -1294,7 +1294,7 @@ BEGIN
 	DEALLOCATE PREPARE stmt;
     
     
-	-- Creazione della tabella risultante se non esiste
+	-- CreazioneNuovoTest della tabella risultante se non esiste
     SET @createTableQuery = CONCAT('CREATE TABLE IF NOT EXISTS ', nomeTabella, ' AS ', @querySelect);
     PREPARE createStmt FROM @createTableQuery;
     EXECUTE createStmt;

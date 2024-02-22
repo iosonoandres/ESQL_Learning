@@ -123,13 +123,19 @@ function getSelectTest()
                 </div>
 
                 <div class="form-group">
-                    <label for="testo">Testo:</label>
+                    <label for="testo">Scrivere opzioni Test (separate da #):</label>
                     <textarea class="form-control" name="testo" id="testo" required></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="opzioniCorrette">Opzioni Corrette (separato da ,):</label>
+                    <label for="opzioniCorrette">Opzioni Corrette (IN NUMERI separato da ,):</label>
                     <input type="text" class="form-control" name="opzioniCorrette" id="opzioniCorrette" required>
+                </div>
+
+                <!-- Campo aggiunto per le opzioni non corrette -->
+                <div class="form-group">
+                    <label for="opzioniNonCorrette">Opzioni Non Corrette (IN NUMERI separato da ,):</label>
+                    <input type="text" class="form-control" name="opzioniNonCorrette" id="opzioniNonCorrette" required>
                 </div>
 
                 <button type="submit" name="creaQuesitoChiuso" class="btn btn-primary">Crea Quesito Chiuso</button>
@@ -184,7 +190,8 @@ function getSelectTest()
                 body {
                     background-image: url('design/divietovero.jpg');
                     background-size: cover;
-                    background: position 100px;;
+                    background: position 100px;
+                    ;
                 }
             </style>
             <div class="alert alert-danger" role="alert">
