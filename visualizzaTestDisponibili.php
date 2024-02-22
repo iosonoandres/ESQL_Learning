@@ -69,7 +69,6 @@ function getTipoUtente($email) {
             <div class="test-title"><?= htmlspecialchars($test['titolo']) ?></div>
             <div class="test-date">Data: <?= htmlspecialchars($test['data']) ?></div>
             <a href="svolgimentoTestDesign.php?titoloTest=<?= urlencode($test['titolo']) ?>" class="btn btn-primary btn-sm">Svolgi Test</a>
-            <a href="guardaTestDesign.php?titoloTest=<?= urlencode($test['titolo']) ?>" class="btn btn-primary btn-sm">Visualizza Test</a>
         </div>
     <?php endforeach; ?>
 </div>
