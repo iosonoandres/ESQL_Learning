@@ -10,6 +10,22 @@ class GuardaTestLogica {
         $this->pdo = $pdo;
     }
 
+    public function getTestDisponibili($emailStudente) {
+        $testDisponibili = [];
+        try {
+            $stmt = $this->pdo->prepare("SELECT t.titolo, t.data 
+                                         FROM TEST t
+                                         LEFT JOIN SVOLGIMENTO s ON t.titolo = s.titoloTest AND s.emailStudente = :emailStudente
+                                         WHERE s.emailStudente IS NULL OR s.stato = 'Concluso'");
+            $stmt->bindParam(':emailStudente', $emailStudente, PDO::PARAM_STR);
+            $stmt->execute();
+            $testDisponibili = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            echo "Errore nel recupero dei test disponibili: " . $e->getMessage();
+        }
+        return $testDisponibili;
+    }
+
     public function getDomandeTest($titoloTest) {
         try {
             // Verifica se il test consente la visualizzazione delle risposte
