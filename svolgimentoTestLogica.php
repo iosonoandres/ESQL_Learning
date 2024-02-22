@@ -92,17 +92,17 @@ class SvolgimentoTestLogica {
 
 
     // Funzione per inserire la risposta di codice di uno studente e verificarne l'esito
-    public function inserisciRispostaCodiceStudente($emailStudente, $titoloTest, $idQuesito, $testoRisposta, $tabOutputStudente) {
+    public function inserisciRispostaCodiceStudente($emailStudente, $titoloTest, $idQuesito, $testoRisposta) {
         try {
             // Prepara la chiamata alla procedura
-            $stmt = $this->pdo->prepare("CALL dbESQL.InserisciRispostaCodiceStudente(:inputEmailStudente, :inputTitoloTest, :inputIDQuesito, :inputTestoRisposta, :tabOutputStudente)");
+            $stmt = $this->pdo->prepare("CALL dbESQL.InserisciRispostaCodiceStudente(:inputEmailStudente, :inputTitoloTest, :inputIDQuesito, :inputTestoRisposta)");
 
             // Associa i parametri
             $stmt->bindParam(':inputEmailStudente', $emailStudente, PDO::PARAM_STR);
             $stmt->bindParam(':inputTitoloTest', $titoloTest, PDO::PARAM_STR);
             $stmt->bindParam(':inputIDQuesito', $idQuesito, PDO::PARAM_INT);
             $stmt->bindParam(':inputTestoRisposta', $testoRisposta, PDO::PARAM_STR);
-            $stmt->bindParam(':tabOutputStudente', $tabOutputStudente, PDO::PARAM_STR);
+            
 
             // Esegue la procedura
             $stmt->execute();
