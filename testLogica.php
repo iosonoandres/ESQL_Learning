@@ -1,4 +1,5 @@
 <?php
+// testLogica.php
 session_start();
 
 require_once __DIR__ . '/root/connect.php'; // Collegamento con il connect

@@ -1,8 +1,8 @@
 <?php
-// svolgimentoTestDesign.php
+// guardaTestDesign.php
 session_start();
 require_once __DIR__ . '/root/connect.php';
-require_once __DIR__ . '/SvolgimentoTestLogica.php';
+require_once __DIR__ . '/guardaTestLogica.php';
 
 // Controlla se l'utente è loggato e se è uno studente
 if (!isset($_SESSION['user']['email']) || getTipoUtente($_SESSION['user']['email']) != 'studente') {
@@ -37,7 +37,7 @@ function getTipoUtente($email) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Svolgi Test: <?= htmlspecialchars($titoloTest) ?></title>
+    <title>Guarda Test: <?= htmlspecialchars($titoloTest) ?></title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <style>
         body {
@@ -68,29 +68,25 @@ function getTipoUtente($email) {
 <body>
 
     <div class="container">
-        <h1 class="mb-4">Svolgi Test: <?= htmlspecialchars($titoloTest) ?></h1>
-        <form action="processaRisposteTest.php" method="post">
-            <input type="hidden" name="titoloTest" value="<?= htmlspecialchars($titoloTest) ?>">
-            <?php foreach ($domande as $indice => $domanda) : ?>
-                <div class="domanda">
-                    <h5>Domanda <?= $indice + 1 ?>: <?= htmlspecialchars($domanda['descrizione']) ?></h5>
-                    <?php if (isset($domanda['tipo']) && $domanda['tipo'] === 'codice') : ?>
-                        <textarea name="risposta[<?= $domanda['ID'] ?>]" class="form-control" rows="4" placeholder="Inserisci qui il tuo codice SQL..."></textarea>
-                    <?php else : // Domande a risposta chiusa 
-                    ?>
-                        <?php foreach ($domanda['opzioni'] as $opzione) : ?>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="risposta[<?= $domanda['ID'] ?>]" id="opzione<?= $opzione['Numerazione'] ?>" value="<?= $opzione['Numerazione'] ?>">
-                                <label class="form-check-label" for="opzione<?= $opzione['Numerazione'] ?>">
-                                    <?= htmlspecialchars($opzione['testo']) ?>
-                                </label>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
-            <button type="submit" class="btn btn-primary">Invia Risposte</button>
-        </form>
+        <h1 class="mb-4">Guarda Test: <?= htmlspecialchars($titoloTest) ?></h1>
+        <?php foreach ($domande as $indice => $domanda) : ?>
+            <div class="domanda">
+                <h5>Domanda <?= $indice + 1 ?>: <?= htmlspecialchars($domanda['descrizione']) ?></h5>
+                <?php if (isset($domanda['tipo']) && $domanda['tipo'] === 'codice') : ?>
+                    <p>Questa è una domanda a codice. Gli studenti non possono rispondere.</p>
+                <?php else : // Domande a risposta chiusa 
+                ?>
+                    <?php foreach ($domanda['opzioni'] as $opzione) : ?>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="risposta[<?= $domanda['ID'] ?>]" id="opzione<?= $opzione['Numerazione'] ?>" value="<?= $opzione['Numerazione'] ?>" disabled>
+                            <label class="form-check-label" for="opzione<?= $opzione['Numerazione'] ?>">
+                                <?= htmlspecialchars($opzione['testo']) ?>
+                            </label>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

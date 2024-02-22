@@ -1,5 +1,5 @@
 <?php
-// svolgimentoTestLogica.php
+// guardaTestLogica.php
 
 require_once __DIR__ . '/root/connect.php';
 

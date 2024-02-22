@@ -167,7 +167,6 @@ CREATE TABLE dbESQL.RISPOSTA_CODICE (
     titoloTest VARCHAR(255),
     emailStudente VARCHAR(255),
     testoRisposta TEXT,
-    nomeTabOutputStudente varchar(255),
     PRIMARY KEY (data, emailStudente),
     FOREIGN KEY (data, emailStudente) REFERENCES RISPOSTA(data, emailStudente),
 	FOREIGN KEY (IDQuesito, titoloTest) REFERENCES QUESITO_DI_CODICE(ID, titoloTest)
@@ -206,6 +205,7 @@ CREATE TABLE dbESQL.RIGA (
     FOREIGN KEY (nomeTabella) REFERENCES TABELLA_DI_ESERCIZIO(nome)
 );
 
+
 #trigger aggiuntivo: imposta stato ad 'Aperto' per gli studenti che non hanno
 #inserito risposte
 DELIMITER //
@@ -224,6 +224,22 @@ END;
 DELIMITER ;
 
 
+#trigger aggiuntivo: imposta stato ad 'Aperto' per gli studenti che vengono aggiunti dopo inserimento test
+DELIMITER //
+
+CREATE TRIGGER dbESQL.InserisciStudentiNuoviInSvolgimento
+AFTER INSERT ON STUDENTE
+FOR EACH ROW
+BEGIN
+	INSERT INTO SVOLGIMENTO (titoloTest, emailStudente, stato)
+    SELECT titolo, NEW.email, 'Aperto'
+    FROM TEST;
+END;
+//
+
+DELIMITER ;
+
+
 
 DELIMITER $$
 
@@ -234,7 +250,7 @@ BEGIN
     -- Incrementa num_righe di tabella_di_esercizio per la tabella aggiornata
     UPDATE tabella_di_esercizio
     SET num_righe = num_righe + 1
-    WHERE nome = NEW.nomeTabella; -- Assicurati che "nome" in tabella_di_esercizio corrisponda a "nomeTabella" in CALL_PROCEDURE_INSERIMENTO
+    WHERE nome = NEW.nomeTabella; 
 END$$
 
 DELIMITER ;
@@ -248,24 +264,18 @@ AFTER INSERT ON dbESQL.RISPOSTA_CHIUSA
 FOR EACH ROW
 BEGIN
     DECLARE numRisposte INT;
-    
+
     -- Conta il numero di risposte per lo studente e il test specificati
     SELECT COUNT(*)
     INTO numRisposte
-    FROM dbESQL.RISPOSTA_CHIUSA
-    WHERE emailStudente = NEW.emailStudente AND titoloTest = (
-        SELECT titoloTest
-        FROM dbESQL.QUESITO_A_RISPOSTA_CHIUSA
-        WHERE ID = NEW.IDQuesito
-    );
-    
-    -- Se il numero di risposte è 1, aggiorna lo stato dello svolgimento
+    FROM dbESQL.RISPOSTA_CHIUSA RC
+    WHERE RC.emailStudente = NEW.emailStudente AND RC.titoloTest = NEW.titoloTest;
+
     IF numRisposte = 1 THEN
         UPDATE dbESQL.SVOLGIMENTO
         SET dbESQL.SVOLGIMENTO.stato = 'InCompletamento'
-        WHERE titoloTest =new.titoloTest and emailStudente=new.emailStudente;
+        WHERE titoloTest = NEW.titoloTest AND emailStudente = NEW.emailStudente;
     END IF;
-
 
 END;
 //
@@ -279,20 +289,17 @@ FOR EACH ROW
 BEGIN
     DECLARE numRisposte INT;
 
-    -- Determine the type of response (closed or code)
+
+    -- Conta il numero di risposte per lo studente e il test specificati
     SELECT COUNT(*)
     INTO numRisposte
-    FROM dbESQL.RISPOSTA_CODICE
-    WHERE emailStudente = NEW.emailStudente AND titoloTest = (
-        SELECT titoloTest
-        FROM dbESQL.QUESITO_DI_CODICE
-        WHERE ID = NEW.IDQuesito
-    );
-	
+    FROM dbESQL.RISPOSTA_CODICE RC
+    WHERE RC.emailStudente = NEW.emailStudente AND RC.titoloTest = NEW.titoloTest;
+
     IF numRisposte = 1 THEN
         UPDATE dbESQL.SVOLGIMENTO
         SET dbESQL.SVOLGIMENTO.stato = 'InCompletamento'
-        WHERE titoloTest =new.titoloTest and emailStudente=new.emailStudente;
+        WHERE titoloTest = NEW.titoloTest AND emailStudente = NEW.emailStudente;
     END IF;
 
 END;
@@ -325,7 +332,7 @@ BEGIN
     SELECT COUNT(*) INTO totalRisposteChiuseInserite 
     FROM RISPOSTA_CHIUSA JOIN RISPOSTA
     on RISPOSTA.emailStudente = RISPOSTA_CHIUSA.emailStudente and RISPOSTA.data= RISPOSTA_CHIUSA.data
-    WHERE RISPOSTA_CHIUSA.titoloTest = NEW.titoloTest and esito = true;
+    WHERE RISPOSTA_CHIUSA.titoloTest = NEW.titoloTest and esito = true and RISPOSTA_CHIUSA.emailStudente = NEW.emailStudente;
 
     -- Conta il numero totale di quesiti di codice per il test
     SELECT COUNT(*) INTO totalQuesitiCodice FROM QUESITO_DI_CODICE WHERE titoloTest = NEW.titoloTest;
@@ -334,10 +341,10 @@ BEGIN
     SELECT COUNT(*) INTO totalRisposteCodiceInserite 
     FROM RISPOSTA_CODICE join RISPOSTA 
     on RISPOSTA.emailStudente = RISPOSTA_CODICE.emailStudente and RISPOSTA.data= RISPOSTA_CODICE.data
-    WHERE RISPOSTA_CODICE.titoloTest = NEW.titoloTest and esito=true;
-
-    -- Verifica se sono state inserite tutte le risposte per entrambi i tipi di quesiti
-    IF totalRisposteChiuseInserite = totalQuesitiChiusi AND totalRisposteCodiceInserite = totalQuesitiCodice THEN
+    WHERE RISPOSTA_CODICE.titoloTest = NEW.titoloTest and esito=true and RISPOSTA_CODICE.emailStudente = NEW.emailStudente;
+    
+    -- Verifica se sono state inserite, almeno una volta, tutte le risposte per entrambi i tipi di quesiti
+    IF totalRisposteChiuseInserite >= totalQuesitiChiusi AND totalRisposteCodiceInserite >= totalQuesitiCodice THEN
         -- Aggiorna lo stato del test se tutte le risposte sono state inserite
         UPDATE SVOLGIMENTO
         SET stato = 'Concluso'
@@ -364,7 +371,7 @@ BEGIN
     SELECT COUNT(*) INTO totalRisposteChiuseInserite 
     FROM RISPOSTA_CHIUSA JOIN RISPOSTA
     on RISPOSTA.emailStudente = RISPOSTA_CHIUSA.emailStudente and RISPOSTA.data= RISPOSTA_CHIUSA.data
-    WHERE RISPOSTA_CHIUSA.titoloTest = NEW.titoloTest and esito = true;
+    WHERE RISPOSTA_CHIUSA.titoloTest = NEW.titoloTest and esito = true and RISPOSTA_CHIUSA.emailStudente = NEW.emailStudente;
 
     -- Conta il numero totale di quesiti di codice per il test
     SELECT COUNT(*) INTO totalQuesitiCodice FROM QUESITO_DI_CODICE WHERE titoloTest = NEW.titoloTest;
@@ -373,10 +380,11 @@ BEGIN
     SELECT COUNT(*) INTO totalRisposteCodiceInserite 
     FROM RISPOSTA_CODICE join RISPOSTA 
     on RISPOSTA.emailStudente = RISPOSTA_CODICE.emailStudente and RISPOSTA.data= RISPOSTA_CODICE.data
-    WHERE RISPOSTA_CODICE.titoloTest = NEW.titoloTest and esito=true;
-
-    -- Verifica se sono state inserite tutte le risposte per entrambi i tipi di quesiti
-    IF totalRisposteChiuseInserite = totalQuesitiChiusi AND totalRisposteCodiceInserite = totalQuesitiCodice THEN
+    WHERE RISPOSTA_CODICE.titoloTest = NEW.titoloTest and esito=true and RISPOSTA_CODICE.emailStudente = NEW.emailStudente;
+	
+    
+    -- Verifica se sono state inserite, almeno una volta, tutte le risposte per entrambi i tipi di quesiti
+    IF totalRisposteChiuseInserite >= totalQuesitiChiusi AND totalRisposteCodiceInserite >= totalQuesitiCodice THEN
         -- Aggiorna lo stato del test se tutte le risposte sono state inserite
         UPDATE SVOLGIMENTO
         SET stato = 'Concluso'
@@ -394,7 +402,7 @@ CREATE TRIGGER dbESQL.CambioStatoTest
 AFTER UPDATE ON TEST
 FOR EACH ROW
 BEGIN
-    -- Verifica se il campo VisualizzaRisposte è stato impostato su True
+
     IF NEW.visualizzaRisposte = true THEN
         -- Aggiorna lo stato del test a 'Concluso' per tutti gli studenti
         UPDATE SVOLGIMENTO
@@ -424,15 +432,14 @@ BEGIN
     IF (SELECT COUNT(*) FROM dbESQL.utente WHERE email = inputEmail) > 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'EMAIL RISULTA GIÀ PRESENTE';
     ELSE
-        -- Inserimento dell'utente nella tabella UTENTE
+
         INSERT INTO dbESQL.UTENTE (email, nome, cognome, telefono)
         VALUES (inputEmail, inputNome, inputCognome, inputTelefono);
 
-        -- Inserimento dell'account nella tabella ACCOUNT
         INSERT INTO dbESQL.ACCOUNT (EMAIL_ACCOUNT, PASSWORD, TIPO_ACCOUNT)
         VALUES (inputEmail, inputPassword, 'studente');
 
-        -- Inserimento dello studente nella tabella STUDENTE
+
         INSERT INTO dbESQL.STUDENTE (email, annoImmatricolazione, codice) VALUES (inputEmail, inputAnnoImmatricolazione,inputCodice);
     END IF;
 END ££
@@ -454,15 +461,13 @@ BEGIN
     IF (SELECT COUNT(*) FROM dbESQL.utente WHERE email = inputEmail) > 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'EMAIL RISULTA GIÀ PRESENTE';
     ELSE
-        -- Inserimento dell'utente nella tabella UTENTE
         INSERT INTO dbESQL.UTENTE (email, nome, cognome, telefono)
         VALUES (inputEmail, inputNome, inputCognome, inputTelefono);
 
-        -- Inserimento dell'account nella tabella ACCOUNT
         INSERT INTO dbESQL.ACCOUNT (EMAIL_ACCOUNT, PASSWORD, TIPO_ACCOUNT)
         VALUES (inputEmail, inputPassword, 'docente');
 
-        -- Inserimento dello studente nella tabella STUDENTE
+       
         INSERT INTO dbESQL.DOCENTE (email, corso, dipartimento) VALUES (inputEmail, inputCorso,inputDipartimento);
     END IF;
 END ££
@@ -480,7 +485,7 @@ BEGIN
 	END IF;
 END ££
 
-#NON CONCLUSI?
+#NON CONCLUSI
 DELIMITER //
 CREATE PROCEDURE dbESQL.VisualizzaTestDisponibili()
 BEGIN
@@ -523,7 +528,7 @@ CREATE PROCEDURE dbESQL.InserisciTabellaDiEsercizio(
     -- Esempio di formato: "attributo1#tipo1#primaria# " 
 		
 	-- LO SPAZIO SI USA SOLO TRA ATTRIBUTO PRECEDENTE E SUCCESSIVO
-    -- ATTENTI! AL POSTO DI PRIMARIA CI VA TRUE O FALSE
+      #ATTENTI! AL POSTO DI PRIMARIA CI VA TRUE O FALSE
       
     /*'id#INT#true# nome#char#false# anni#INT#false#'*/
     
@@ -531,7 +536,7 @@ CREATE PROCEDURE dbESQL.InserisciTabellaDiEsercizio(
     IN integritaReferenziale TEXT -- Una stringa che contiene i vincoli di integrità referenziale separati da #
     
     -- 'attrib1#attrib2#tab2#'
-    -- dove attrib1->attrib2 di tabella2
+    #dove attrib1->attrib2 di tabella2
    
 )
 BEGIN
@@ -545,7 +550,6 @@ BEGIN
     DECLARE attributoRiferimento2 VARCHAR(255);
     DECLARE TabellaRif2 VARCHAR(255);
     
-    -- Inserisci la nuova tabella di esercizio
     INSERT INTO TABELLA_DI_ESERCIZIO (nome, emailDocente, data, num_righe)
     VALUES (inputNomeTabella, inputEmailDocente, NOW(), 0);
     
@@ -578,8 +582,7 @@ BEGIN
             SET @sql = CONCAT(@sql, ' PRIMARY KEY');
         END IF;
         SET @sql = CONCAT(@sql, ', ');
-        
-           -- Inserisci l'attributo nella tabella ATTRIBUTO
+ 
         INSERT INTO ATTRIBUTO (nome, nomeTabella, tipo, primaria)
         VALUES (attributo, inputNomeTabella, tipoAttributo, prim);
         
@@ -604,7 +607,6 @@ BEGIN
         -- Aggiungi il vincolo di integrità referenziale alla definizione della tabella
         SET @sql = CONCAT(@sql, ' FOREIGN KEY (', attributoRiferimento1, ') REFERENCES ', TabellaRif2, '(', attributoRiferimento2, '), ');
         
-         -- Inserisci i vincoli di integrità referenziale nella tabella INTEGRITA_REFERENZIALE
         INSERT INTO INTEGRITA_REFERENZIALE (Attributo1, Attributo2, Tabella1, Tabella2)
         VALUES (attributoRiferimento1, attributoRiferimento2, inputNomeTabella, TabellaRif2);
         
@@ -619,8 +621,7 @@ BEGIN
     PREPARE stmt FROM @sql;
     EXECUTE stmt;
     DEALLOCATE PREPARE stmt;
-    
-    -- Informa che la tabella è stata inserita con successo
+
     SELECT 'Nuova tabella di esercizio inserita con successo!' AS Messaggio;
 END;
 //
@@ -720,7 +721,7 @@ CREATE PROCEDURE dbESQL.creazioneQuesitoChiusoConRisposte(
     IN inputDescrizione TEXT,
     IN inputTesto TEXT, -- testo (possibile soluzione) per quesiti a risposta chiusa (campo di opzione), separati da #
     # es: soluzione = 4#soluzione = 3
-    IN inputOpzioniCorrette TEXT  -- Opzioni scelte dal docente come corrette per quesiti a risposta chiusa
+    IN inputOpzioniCorrette TEXT  -- Numerazione opzioni scelte dal docente come corrette per quesiti a risposta chiusa
     # FORMA: 1,2,3... almeno posso inserirle direttamente nel campo di opzione
     
 )
@@ -745,16 +746,15 @@ BEGIN
         IF inputTitoloTest IN (SELECT titolo FROM TEST) THEN
        
 
-            -- Inserisci il nuovo quesito
             INSERT INTO QUESITO (ID,titoloTest, numRisposte, difficoltà, descrizione) 
             VALUES (quesitoID,inputTitoloTest, 0, inputDifficoltà, inputDescrizione);
             
             
             WHILE i <= LENGTH(inputNomeTabella) - LENGTH(REPLACE(inputNomeTabella, '#', '')) + 1 DO
-                        -- Estrae una singola risposta dalla stringa inputTesto
+                        
 				SET nomiTabelle = SUBSTRING_INDEX(SUBSTRING_INDEX(inputNomeTabella, '#', i), '#', -1);
                          
-						-- Inserisci il nuovo quesito POSSONO ESSERE PIU DI UNA
+						-- Inserisci il nuovo quesito (tabelle POSSONO ESSERE PIU DI UNA)
 				INSERT INTO RIFERIMENTO (nomeTabella, IDQuesito, titoloTest) 
 				VALUES (nomiTabelle, quesitoID, inputTitoloTest);
                         
@@ -763,7 +763,6 @@ BEGIN
             
             SET i=1;
             
-                    -- Inserire il quesito a risposta chiusa nella tabella corrispondente
 				INSERT INTO QUESITO_A_RISPOSTA_CHIUSA (ID, titoloTest) 
 				VALUES (quesitoID, inputTitoloTest);
                     
@@ -786,8 +785,6 @@ DELIMITER ;
 
 #Creazione	di	un	nuovo	quesito	con	le	relative	risposte
 
-#PROVO
-#NON AVVIENE INSERIMENTO, DEVO TESTARE NEL CASO IN CUI COMPAIANO PIU TABELLE
 DELIMITER $$
 
 CREATE PROCEDURE dbESQL.creazioneQuesitoCodiceConRisposte(
@@ -810,6 +807,15 @@ BEGIN
 	DECLARE createTableQuery TEXT;
     DECLARE maxID INT;
     DECLARE query1 TEXT;
+    DECLARE tableExists INT;
+
+    -- Controllo se esiste già una tabella con lo stesso nome
+    SELECT COUNT(*) INTO tableExists FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = inputNomeTabSoluzione;
+    
+    -- Se esiste una tabella con lo stesso nome, restituisce un messaggio di errore
+    IF tableExists > 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Esiste già una tabella di soluzione con lo stesso nome: scegli un nome diverso.';
+    END IF;
 
     -- Verifica se ci sono già quesiti per il test specificato
     SELECT COALESCE(MAX(ID), 0) INTO maxID
@@ -820,7 +826,7 @@ BEGIN
     SET quesitoID = IF(maxID = 0, 1, maxID + 1);
 
         IF inputTitoloTest IN (SELECT titolo FROM TEST) THEN
-            -- Inserisci il nuovo quesito
+
 
             INSERT INTO QUESITO (ID,titoloTest, numRisposte, difficoltà, descrizione) 
             VALUES (quesitoID,inputTitoloTest, 0, inputDifficoltà, inputDescrizione);
@@ -832,7 +838,7 @@ BEGIN
                 -- Estrae una singola tabella dalla stringa inputNomeTabella
                 SET nomiTabelle = SUBSTRING_INDEX(SUBSTRING_INDEX(inputNomeTabella, '#', i), '#', -1);
                          
-                -- Inserisci il nuovo quesito POSSONO ESSERE PIU DI UNA
+                -- Inserisci il nuovo quesito (tabelle POSSONO ESSERE PIU DI UNA)
                 INSERT INTO RIFERIMENTO (nomeTabella, IDQuesito, titoloTest) 
                 VALUES (nomiTabelle, quesitoID, inputTitoloTest);
                         
@@ -851,7 +857,7 @@ BEGIN
             -- Esegui la query e salva il risultato nella tabella specificata
 			CALL dbESQL.eseguiQueryESalvaInTabellaCorretta(query1, inputNomeTabSoluzione);
             
-            -- Inserisce la soluzione per il quesito di codice
+	
             INSERT INTO SOLUZIONE (Sketch, IdQuesitoCodice, titoloTest,nomeTabOutputDocente) 
             VALUES (inputSoluzione, quesitoID, inputTitoloTest,inputNomeTabSoluzione);
         
@@ -877,7 +883,6 @@ BEGIN
 
 	-- Esegui la query per creare la nuova tabella
     SET @createTableQuery = createTableQuery;
-    -- Esegui la query per creare la nuova tabella
     PREPARE createStmt FROM @createTableQuery;
     EXECUTE createStmt;
     DEALLOCATE PREPARE createStmt;
@@ -890,40 +895,15 @@ DELIMITER ;
 
 
 
-
 #Abilitare	/	disabilitare la	visualizzazione	delle risposte per	uno	specifico	test
 DELIMITER $$
 CREATE PROCEDURE dbESQL.VisualizzazioneRisposte(IN input_titoloTest VARCHAR(255),IN input_abilita BOOLEAN)
 BEGIN
-DECLARE i int;
-DECLARE id_quesito INT;
-DECLARE id_quesiti_list VARCHAR(255);
-SET i=1;
         
         IF input_titoloTest IN (SELECT titolo FROM TEST) THEN
       
             #Abilita/disabilita la visualizzazione delle risposte per il test di input
             UPDATE TEST SET visualizzaRisposte = input_abilita WHERE titolo = input_titoloTest;
-            
-            IF (input_abilita = true) THEN
-            
-            
-            SET @num_quesiti:=0;
-            SET @id_quesiti:='';
-            CALL dbESQL.ContaQuesitiTest(input_titoloTest, @num_quesiti,@id_quesiti);
-            SET id_quesiti_list = @id_quesiti;
-            
-            WHILE(i<=@num_quesiti) DO
-				
-                SET id_quesito = SUBSTRING_INDEX(SUBSTRING_INDEX(id_quesiti_list, '#', i), '#', -1);
-                    -- Richiama la procedura VisualizzaRispostaCorretta per ottenere le risposte corrette del quesito
-				CALL dbESQL.VisualizzaRispostaCorretta(id_quesito, input_titoloTest);
-                    
-                SET i = i + 1;
-            END WHILE;
-            
-            END IF;
-          
             
             SELECT 'Operazione completata con successo.';
         ELSE
@@ -932,56 +912,6 @@ SET i=1;
 END$$
 
 DELIMITER ;
-
-
-DELIMITER $$
-
-CREATE PROCEDURE dbESQL.ContaQuesitiTest(
-    IN input_titoloTest VARCHAR(255),
-    OUT num_quesiti INT,
-    OUT id_quesiti VARCHAR(255)
-)
-BEGIN
-    -- Conta il numero di quesiti
-    SELECT COUNT(*) INTO num_quesiti FROM QUESITO WHERE titoloTest = input_titoloTest;
-    
-    -- Recupera gli ID dei quesiti separati da #
-    SELECT GROUP_CONCAT(ID SEPARATOR '#') INTO id_quesiti FROM QUESITO WHERE titoloTest = input_titoloTest;
-END$$
-
-DELIMITER ;
-
-DELIMITER $$
-CREATE PROCEDURE dbESQL.VisualizzaRispostaCorretta(
-    IN input_idQuesito INT,
-    IN input_titoloTest VARCHAR(255)
-)
-BEGIN
-    DECLARE tipoQuesito VARCHAR(50);
-    DECLARE contStampa int;#per farmi stampare una sola volta l'opzione corretta
-    SET contStampa=1;
-    
-    -- Controlla se il quesito è di tipo chiuso
-    IF EXISTS (SELECT * FROM QUESITO_A_RISPOSTA_CHIUSA WHERE ID = input_idQuesito AND titoloTest = input_titoloTest) THEN
-        SET tipoQuesito = 'Chiuso';
-    -- Controlla se il quesito è di tipo codice
-    ELSEIF EXISTS (SELECT * FROM QUESITO_DI_CODICE WHERE ID = input_idQuesito AND titoloTest = input_titoloTest) THEN
-        SET tipoQuesito = 'Codice';
-    ELSE
-        -- Se il tipo del quesito non è riconosciuto, restituisci un errore
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Tipo di quesito non riconosciuto.';
-    END IF;
-    
-    -- Se il tipo del quesito è chiuso, restituisci le opzioni corrette
-    IF (tipoQuesito = 'Chiuso') THEN #impongo numerazione = 1 almeno stampa solo una volta
-        SELECT opzioneCorretta FROM OPZIONE WHERE idQuesitoChiusa = input_idQuesito AND titoloTest = input_titoloTest AND numerazione=1;
-    -- Se il tipo del quesito è codice, restituisci la soluzione
-    ELSEIF tipoQuesito = 'Codice' THEN
-        SELECT sketch FROM SOLUZIONE WHERE IdQuesitoCodice = input_idQuesito AND titoloTest = input_titoloTest;
-    END IF;
-END$$
-DELIMITER ;
-
 
 
 #Inserimento di	un	messaggio
@@ -1003,7 +933,6 @@ BEGIN
 		VALUES (inputTitolo, NOW(), inputTesto, inputTitoloTest, NULL, inputEmailDocenteMittente, NULL);
 	
     
-		#INTUIZIONE GIUSTA????? riempire anche DESTINATARIO_STUD CON MESS INVIATO DA DOCENTE
 		INSERT INTO DESTINATARIO_STU (emailStudente, titoloMessaggio, titoloTest, data)
 		SELECT email, inputTitolo, inputTitoloTest, now()
 		FROM STUDENTE;
@@ -1020,8 +949,6 @@ DELIMITER ;
 
 /*OPERAZIONI STUDENTE*/
 
-#ATTENTAAAAAA
-#NON CAMBIARE ORDINE DI INSERIMENTO NELLE TABELLE ALTRIMENTI NON FUNZIONANO TRIGGER
 DELIMITER //
 CREATE PROCEDURE dbESQL.InserisciRispostaChiusaStudente(
     IN inputEmailStudente VARCHAR(255),
@@ -1048,8 +975,9 @@ BEGIN
 				UPDATE SVOLGIMENTO
 				SET dataUltimaRisposta = NOW()
 				WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente;
+                 
                  #se inserisce tutte le risposte corrette diventa concluso, devo controllare che non sia avvenuto
-			ELSE #if EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente and stato='Concluso') THEN
+			ELSE 
 					SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Il test è concluso';
 			END IF;
             
@@ -1064,24 +992,18 @@ BEGIN
                     SET esitoRISP = FALSE;
 				END IF;
 				
-            -- Inserimento dell'esito nella tabella RISPOSTA
 				INSERT INTO RISPOSTA (data, emailStudente, esito)
 				VALUES (NOW(), inputEmailStudente, esitoRISP);
                 
 
-                
-                -- Inserimento dell'esito e della risposta nella tabella RISPOSTA_CHIUSA
                 INSERT INTO RISPOSTA_CHIUSA (data, IDQuesito, titoloTest, emailStudente, numerazioneOpzione)
                 VALUES (NOW(), inputIDQuesito, inputTitoloTest, inputEmailStudente, opzioneScelta);
                 
-				#NUM_RISPOSTE DI QUESITO CHE DEVONO ESSERE INCREMENTATE
+                
 				UPDATE QUESITO
 				SET QUESITO.NumRisposte = QUESITO.NumRisposte + 1
-				WHERE QUESITO.ID = inputIDQuesito;
-               
-               
-               
-               #DA RIVEDERE CREDO
+				WHERE QUESITO.ID = inputIDQuesito and titoloTest = inputTitoloTest;
+
                
              
         ELSE
@@ -1094,33 +1016,31 @@ END //
 DELIMITER;
 
 
-#ATTENTA DA RIVEDERE
-
-#ATTENTAAAAAA
-#NON CAMBIARE ORDINE DI INSERIMENTO NELLE TABELLE ALTRIMENTI NON FUNZIONANO TRIGGER
-
-#modifico:
-#non passo in input id soluzione, nè nome_risultante (deve sempre chiamarsi così all'interno), nè nomeTabSoluzioneStudente (poi faccio drop table)
 DELIMITER //
-#per capire esito: applico la query dello studente e controllo che dia lo stesso output di quella del docente
+
 CREATE PROCEDURE dbESQL.InserisciRispostaCodiceStudente(
     IN inputEmailStudente VARCHAR(255),
     IN inputTitoloTest VARCHAR(255),
     IN inputIDQuesito INT,
-    IN inputTestoRisposta TEXT,-- Utilizzato solo se il quesito è di tipo 'CODICE', rappresenta la query proposta
-    IN tabOutputStudente varchar(255) #scelgo nome della tabella di output dello studente, a cui è stata applicata la query dello studente stesso
+    IN inputTestoRisposta TEXT-- Utilizzato solo se il quesito è di tipo 'CODICE', rappresenta la query proposta
 )
 BEGIN
-
+	
     DECLARE esitoRISP BOOLEAN;
     DECLARE outputDoc varchar(255);
-    
+    DECLARE rispostaData DATETIME;
+    SET rispostaData:= NOW();
+
+ 
+    DROP TABLE if exists tabOutputStudente;
+    DROP TABLE if exists NOME_RISULTANTE;
     
     
 	SELECT nomeTabOutputDocente INTO outputDoc
-	FROM QUESITO_DI_CODICE JOIN SOLUZIONE on QUESITO_DI_CODICE.ID = SOLUZIONE.ID;
-    
-
+	FROM SOLUZIONE JOIN QUESITO_DI_CODICE on QUESITO_DI_CODICE.ID = SOLUZIONE.IdQuesitoCodice and 
+    QUESITO_DI_CODICE.titoloTest = SOLUZIONE.titoloTest
+	WHERE QUESITO_DI_CODICE.ID = inputIDQuesito AND QUESITO_DI_CODICE.titoloTest = inputTitoloTest;
+  
     IF inputEmailStudente IN (SELECT email FROM STUDENTE) THEN
          
         #se visualizza risposte è false, non è concluso
@@ -1130,32 +1050,30 @@ BEGIN
 			IF NOT EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente) THEN
     -- Se è la prima risposta, imposta sia la data della prima risposta che quella dell'ultima risposta
 				INSERT INTO SVOLGIMENTO (titoloTest, emailStudente, dataPrimaRisposta, dataUltimaRisposta)
-				VALUES (inputTitoloTest, inputEmailStudente, NOW(), NOW());
+				VALUES (inputTitoloTest, inputEmailStudente, rispostaData, rispostaData);
 			ELSEIF EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente and stato!='Concluso') THEN
     -- Se non è la prima risposta, aggiorna solo la data dell'ultima risposta
 				UPDATE SVOLGIMENTO
-				SET dataUltimaRisposta = NOW()
+				SET dataUltimaRisposta = rispostaData
 				WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente;
-                 #se inserisce tutte le risposte corrette diventa concluso, devo controllare che non sia avvenuto
-			ELSE #if EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente and stato='Concluso') THEN
+	
+			ELSE
 					SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Il test è concluso';
 			END IF;
-             
 			INSERT INTO RISPOSTA (data, emailStudente)
-			VALUES (NOW(), inputEmailStudente); #INIZIALMENTE ESITO = FALSE
+			VALUES (rispostaData, inputEmailStudente); #INIZIALMENTE ESITO = FALSE
 
 			SET @syntaxValid := true;
             CALL dbESQL.CheckSyntax(inputTestoRisposta, @syntaxValid);
-            
 		IF(@syntaxValid = true) THEN
 
-            CALL dbESQL.eseguiQueryESalvaInTabellaCorretta(inputTestoRisposta, tabOutputStudente); #creo la tabella soluzione studente da applicazione query
-            #poi verrà cancellata (la chiamo sempre così)
+			#attribuisco un nome ad una tabella risultante, che verrà poi eliminata, che deriva dall'applicazione della query dello studente
+            CALL dbESQL.eseguiQueryESalvaInTabellaCorretta(inputTestoRisposta, 'tabOutputStudente'); 
             
             
 			#verifico che abbiano lo stesso num di colonne
 			SET @numColonne1 := 0;
-            CALL dbESQL.contaColonneTabella(tabOutputStudente, @numColonne1);
+            CALL dbESQL.contaColonneTabella('tabOutputStudente', @numColonne1);
             
             
 			SET @numColonne2 := 0;
@@ -1163,49 +1081,45 @@ BEGIN
             
 			IF (@numColonne1 = @numColonne2)  THEN
             
-				CALL dbESQL.verificaUguaglianzaTabelle(tabOutputStudente,outputDoc,'NOME_RISULTANTE');
+				CALL dbESQL.verificaUguaglianzaTabelle('tabOutputStudente',outputDoc,'NOME_RISULTANTE');
              
 				IF (SELECT * FROM NOME_RISULTANTE) = 0 THEN
                     SET esitoRISP = TRUE;
-                    DROP TABLE NOME_RISULTANTE;
+                    DROP TABLE if exists NOME_RISULTANTE;
+                    DROP TABLE if exists tabOutputStudente;
+ 
                 ELSE
                     SET esitoRISP = FALSE;
-                    DROP TABLE NOME_RISULTANTE;
-				
+                    DROP TABLE if exists NOME_RISULTANTE;
+					DROP TABLE if exists tabOutputStudente;
+
                 END IF;
 				
 			ELSE #(@numColonne1 != @numColonne2)
             
 				SET esitoRISP = FALSE;
-                
+                DROP TABLE if exists tabOutputStudente;
 			END IF;
             
             ELSE #@syntaxValid = false
 				SET esitoRISP = FALSE;
+			
 			END IF;
 			
                 
-              
 				UPDATE RISPOSTA
 				SET esito = esitoRISP
-				WHERE emailStudente = inputEmailStudente AND data = NOW();
+				WHERE emailStudente = inputEmailStudente AND data = rispostaData;
                 
-                
-                #VA INSERITA PER FORZA DOPO SVOLGIMENTO SENNO NON FUNZIONA TRIGGER 
-                -- Inserimento dell'esito e della risposta nella tabella RISPOSTA_CODICE
-				INSERT INTO RISPOSTA_CODICE (data, IDQuesito, titoloTest, emailStudente, testoRisposta, nomeTabOutputStudente)
-				VALUES (NOW(), inputIDQuesito, inputTitoloTest, inputEmailStudente, inputTestoRisposta,tabOutputStudente);
-            
-    
-               
-                
-				#NUM_RISPOSTE DI QUESITO CHE DEVONO ESSERE INCREMENTATE
+
+				INSERT INTO RISPOSTA_CODICE (data, IDQuesito, titoloTest, emailStudente, testoRisposta)
+				VALUES (rispostaData, inputIDQuesito, inputTitoloTest, inputEmailStudente, inputTestoRisposta);
+				 
 				UPDATE QUESITO
 				SET QUESITO.NumRisposte = QUESITO.NumRisposte + 1
-				WHERE QUESITO.ID = inputIDQuesito;
+				WHERE QUESITO.ID = inputIDQuesito and titoloTest = inputTitoloTest;
 
 			
-
         ELSE
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Il test o il quesito specificato non esiste/ il test è concluso';
         END IF;
@@ -1230,7 +1144,7 @@ BEGIN
 
     -- Prova ad eseguire la query per verificare la sintassi
     BEGIN
-        -- Utilizza un blocco per catturare l'errore
+        -- Cattura l'errore
         DECLARE EXIT HANDLER FOR SQLEXCEPTION
         BEGIN
             GET DIAGNOSTICS CONDITION 1 errorMessage = MESSAGE_TEXT;
@@ -1272,7 +1186,7 @@ END$$
 
 DELIMITER ;
 
-#NEL CASO IN CUI NON SI POSSA FARE LA VERIFICA, numero colonne diverse??
+
 DELIMITER $$
 
 CREATE PROCEDURE dbESQL.verificaUguaglianzaTabelle(
@@ -1323,7 +1237,7 @@ BEGIN
     IF inputEmailStudente IN (SELECT email FROM STUDENTE) THEN
     
     IF inputIDQuesito IN (select IDquesito from RISPOSTA_CHIUSA where emailStudente = inputEmailStudente) THEN
-		-- Visualizzazione dell'esito della risposta chiusa
+
         
 		IF((SELECT esito
         FROM RISPOSTA JOIN RISPOSTA_CHIUSA ON RISPOSTA.data = RISPOSTA_CHIUSA.data AND RISPOSTA.emailStudente = RISPOSTA_CHIUSA.emailStudente
@@ -1335,7 +1249,6 @@ BEGIN
         END IF;
         
     ELSEIF inputIDQuesito IN (select IDquesito from RISPOSTA_CODICE where emailStudente = inputEmailStudente) THEN
-		-- Visualizzazione dell'esito della risposta chiusa
         
         IF((SELECT esito
         FROM RISPOSTA JOIN RISPOSTA_CODICE ON RISPOSTA.data = RISPOSTA_CODICE.data AND RISPOSTA.emailStudente = RISPOSTA_CODICE.emailStudente
@@ -1346,7 +1259,6 @@ BEGIN
 			SELECT 'ESITO: NEGATIVO';
         END IF;
     ELSE
-        -- Se lo studente non ha risposto al quesito, restituisci un messaggio di avviso
         SELECT 'Lo studente non ha risposto al quesito specificato del test.';
 	END IF;
     ELSE
@@ -1394,9 +1306,6 @@ WHERE sv.stato = 'Concluso'
 GROUP BY s.codice
 ORDER BY NumeroTestCompletati DESC;
 
-/*
-SELECT CodiceStudente, NumeroTestCompletati
-FROM dbESQL.ClassificaStudentiTestCompletati;*/
 
 CREATE VIEW  dbESQL.ClassificaStudentiRisposteCorrette AS
 SELECT s.codice AS CodiceStudente, 
@@ -1406,9 +1315,6 @@ LEFT JOIN  dbESQL.RISPOSTA r ON s.email = r.emailStudente
 GROUP BY s.codice
 ORDER BY PercentualeRisposteCorrette DESC;
 
-/*SELECT CodiceStudente, PercentualeRisposteCorrette
-FROM ClassificaStudenti;*/
-
 
 CREATE VIEW dbESQL.ClassificaQuesiti AS
 SELECT q.ID AS IDQuesito, q.titoloTest AS TitoloTest, COUNT(rc.data) + COUNT(ra.data) AS NumeroRisposte
@@ -1417,7 +1323,4 @@ LEFT JOIN dbESQL.RISPOSTA_CHIUSA rc ON q.ID = rc.IDQuesito
 LEFT JOIN dbESQL.RISPOSTA_CODICE ra ON q.ID = ra.IDQuesito
 GROUP BY q.ID, q.titoloTest
 ORDER BY NumeroRisposte DESC;
-
-/*SELECT IDQuesito, TitoloTest, NumeroRisposte
-FROM dbESQL.ClassificaQuesiti;*/
 
