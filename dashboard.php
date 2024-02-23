@@ -1,17 +1,37 @@
 <?php
 session_start(); // Assicurati che questa sia la prima istruzione PHP nel file
 
+require_once __DIR__ . '/root/connect.php';
+require_once __DIR__ . '/SvolgimentoTestLogica.php';
+
+// Assicurati che l'utente sia loggato
+if (!isset($_SESSION['user']['email'])) {
+    header('Location: login.php'); // Reindirizza al login se non autorizzato
+    exit();
+}
+
+function getTipoUtente($email)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT TIPO_ACCOUNT FROM ACCOUNT WHERE EMAIL_ACCOUNT = :email");
+    $stmt->execute(['email' => $email]);
+    return $stmt->fetchColumn();
+}
+
+$tipoUtente = getTipoUtente($_SESSION['user']['email']);
+$isDocente = ($tipoUtente == 'docente');
+$isStudente = ($tipoUtente == 'studente');
+
 $features = [
-    ["Inserimento Test", "testDesign.php", true],
+    ["Inserimento Test", "testDesign.php", $isDocente],
     ["Forum Test Vari", "testCommentiDesign.php", true],
     ["Inserimento Messaggio", "inserimentoMessaggioDesign.php", true],
-    ["Inserimento Tabella", "inserimentoTabellaDesign.php", true],
-    ["not-implemented", "inserimentoTabellaDesign.php", true],
-    ["Svolgimento test", "visualizzaTestDisponibili.php", true],
+    ["Inserimento Tabella", "inserimentoTabellaDesign.php", $isDocente],
+    ["Svolgimento test", "visualizzaTestDisponibili.php", $isStudente],
     ["Domande Test/Esito","visualizzaTestDisponibili2.php",true],
-    ["Creazione quesito", "creazioneQuesitoDesign.php",true],
+    ["Creazione quesito", "creazioneQuesitoDesign.php",$isDocente],
     ["Visuale Statistiche", "statisticheDesign.php",true], 
-    ["Cambio Visualizzazione Risposte Test","cambioVisualizzazioneDesign.php", true]
+    ["Cambio Visualizzazione Risposte Test","cambioVisualizzazioneDesign.php", $isDocente]
     // Altre funzionalità vanno qui...
 ];
 ?>
@@ -144,10 +164,10 @@ $features = [
 </head>
 
 <body>
-    <div class="grid">
+<div class="grid">
         <?php foreach ($features as $feature) : ?>
             <div class="cell">
-                <div class="more-info-box <?= $feature[2] ? '' : 'not-implemented' ?>" style="background-color: <?= $feature[2] ? '#f0ffff' : '#dc3545' ?>">
+                <div class="more-info-box <?= $feature[2] ? '' : 'not-implemented' ?>" style="background-color: <?= $feature[2] ? '#f0ffff' : 'rgba(240,255,255,0.2)' ?>">
                     <div class="content">
                         <h2 class="text-bold mb-0"><?= $feature[0] ?></h2>
                     </div>
@@ -157,7 +177,7 @@ $features = [
                     <?php if ($feature[2]) : ?>
                         <a href="<?= $feature[1] ?>" class="more"> Vedi <span class="mif-arrow-right"></span></a>
                     <?php else : ?>
-                        <div class="more">DA IMPLEMENTARE</div>
+                        <div class="more" style="opacity: 0.5;">Accesso non disponibile per tipologia <?= $tipoUtente ?></div>
                     <?php endif; ?>
                 </div>
             </div>

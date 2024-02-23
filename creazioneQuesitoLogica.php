@@ -84,8 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // Redirect a seconda dell'esito
-    header('Location: ' . ($_SESSION['message'] ? 'banana.php' : 'pagina_di_errore.php'));
-    exit();
+    // // Redirect a seconda dell'esito
+    // header('Location: ' . ($_SESSION['message'] ? 'banana.php' : 'pagina_di_errore.php'));
+    // exit();
 }
 ?>

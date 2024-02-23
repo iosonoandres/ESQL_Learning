@@ -77,6 +77,23 @@ function getSelectTest()
             font-weight: bold;
         }
     </style>
+    <script>
+        // Funzione per mostrare o nascondere il campo in base alla selezione
+        function toggleTestField() {
+            var select = document.getElementById('titoloTest');
+            var selectedValue = select.options[select.selectedIndex].value;
+
+            // Imposta l'ID del campo che vuoi mostrare o nascondere
+            var campoDaMostrareONascondere = 'campoDaMostrare';
+
+            // Mostriamo o nascondiamo il campo in base al valore selezionato
+            if (selectedValue === 'valoreDesiderato') {
+                document.getElementById(campoDaMostrareONascondere).style.display = 'block';
+            } else {
+                document.getElementById(campoDaMostrareONascondere).style.display = 'none';
+            }
+        }
+    </script>
 </head>
 
 <body>
@@ -105,7 +122,7 @@ function getSelectTest()
 
                 <div class="form-group">
                     <label for="nomeTabella">Nome Tabella (separato da # per più tabelle):</label>
-                    <input type="text" class="form-control" name="nomeTabella" id="nomeTabella" required>
+                    <input type="text" class="form-control" name="nomeTabella" id="nomeTabella" required onchange="toggleTestField()">
                 </div>
 
                 <div class="form-group">
@@ -137,7 +154,7 @@ function getSelectTest()
                     <label for="opzioniNonCorrette">Opzioni Non Corrette (IN NUMERI separato da ,):</label>
                     <input type="text" class="form-control" name="opzioniNonCorrette" id="opzioniNonCorrette" required>
                 </div>
-                
+
                 <button type="submit" name="creaQuesitoChiuso" class="btn btn-primary">Crea Quesito Chiuso</button>
             </form>
 

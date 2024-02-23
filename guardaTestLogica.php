@@ -26,6 +26,24 @@ class GuardaTestLogica {
         return $testDisponibili;
     }
 
+
+    public function getTestImage($titoloTest) {
+        try {
+            $stmt = $this->pdo->prepare("SELECT foto FROM TEST WHERE titolo = :titoloTest");
+            $stmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if (!empty($result) && isset($result['foto'])) {
+                return $result['foto'];
+            }
+        } catch (PDOException $e) {
+            echo "Errore nel recupero dell'immagine del test: " . $e->getMessage();
+        }
+    
+        return null;
+    }
+
     public function getDomandeTest($titoloTest) {
         try {
             // Verifica se il test consente la visualizzazione delle risposte

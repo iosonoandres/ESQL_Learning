@@ -15,7 +15,7 @@ class SvolgimentoTestLogica {
     public function getTestDisponibili($emailStudente) {
         $testDisponibili = [];
         try {
-            $stmt = $this->pdo->prepare("SELECT t.titolo, t.data 
+            $stmt = $this->pdo->prepare("SELECT t.titolo, t.data, t.foto 
                                          FROM TEST t
                                          LEFT JOIN SVOLGIMENTO s ON t.titolo = s.titoloTest AND s.emailStudente = :emailStudente
                                          WHERE s.emailStudente IS NULL OR s.stato != 'Concluso'");
@@ -27,6 +27,7 @@ class SvolgimentoTestLogica {
         }
         return $testDisponibili;
     }
+    
 
     public function getDomandeTest($titoloTest) {
         $domande = [];
@@ -63,6 +64,22 @@ class SvolgimentoTestLogica {
         return $domande;
     }
     
+    public function getTestImage($titoloTest) {
+        try {
+            $stmt = $this->pdo->prepare("SELECT foto FROM TEST WHERE titolo = :titoloTest");
+            $stmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if (!empty($result) && isset($result['foto'])) {
+                return $result['foto'];
+            }
+        } catch (PDOException $e) {
+            echo "Errore nel recupero dell'immagine del test: " . $e->getMessage();
+        }
+    
+        return null;
+    }
 
 
 

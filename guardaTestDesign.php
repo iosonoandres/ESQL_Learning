@@ -38,33 +38,35 @@ function getTipoUtente($email)
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <style>
         body {
-        font-family: 'Open Sans', Arial, sans-serif;
-        background-color: #f7f7f7;
-        color: #565656;
+            font-family: 'Open Sans', Arial, sans-serif;
+            background-color: #f7f7f7;
+            color: #565656;
         }
 
         .container {
-        padding: 20px;
-        max-width: 800px;
-        margin: 20px auto;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            padding: 20px;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
         }
 
         .domanda {
-        margin-bottom: 20px;
-        padding: 10px;
-        background-color: #f9f9f9;
-        border: 1px solid #eee;
-        border-radius: 5px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 5px;
         }
 
         .corretta {
-        background-color: rgba(76, 175, 80, 0.3); /* Colore di sfondo verde con opacità 0.8 */
-        color: white; /* Testo bianco per una migliore leggibilità */
+            background-color: rgba(76, 175, 80, 0.3);
+            /* Colore di sfondo verde con opacità 0.8 */
+            color: white;
+            /* Testo bianco per una migliore leggibilità */
         }
-        </style>
+    </style>
 
 </head>
 
@@ -72,6 +74,32 @@ function getTipoUtente($email)
 
     <div class="container">
         <h1 class="mb-4">Guarda Test: <?= htmlspecialchars($titoloTest) ?></h1>
+        <?php
+        // Fetch the image from the TEST table
+        $imageData = $guardaTestLogica->getTestImage($titoloTest);
+
+        // Display the image before the first question
+        if (!empty($imageData)) {
+            try {
+                // Get image information
+                $imageInfo = getimagesizefromstring($imageData);
+
+                if ($imageInfo !== false) {
+                    $mimeType = $imageInfo['mime'];
+                } else {
+                    throw new Exception('Failed to determine image type.');
+                }
+        ?>
+                <img src="data:<?= $mimeType ?>;base64,<?= base64_encode($imageData) ?>" alt="Test Image" class="img-fluid mb-4">
+            <?php } catch (Exception $ex) { ?>
+                <!-- Display error message on the UI -->
+                <div class="alert alert-danger" role="alert">
+                    Error displaying image: <?= $ex->getMessage() ?>
+                </div>
+        <?php }
+        }
+        ?>
+
         <?php foreach ($domande as $indice => $domanda) : ?>
             <div class="domanda">
                 <h5>Domanda <?= $indice + 1 ?>: <?= htmlspecialchars($domanda['descrizione']) ?></h5>

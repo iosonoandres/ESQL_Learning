@@ -19,15 +19,13 @@ if (!$titoloTest) {
 $svolgimentoTestLogica = new SvolgimentoTestLogica();
 $domande = $svolgimentoTestLogica->getDomandeTest($titoloTest);
 
-
-function getTipoUtente($email) {
+function getTipoUtente($email)
+{
     global $pdo;
     $stmt = $pdo->prepare("SELECT TIPO_ACCOUNT FROM ACCOUNT WHERE EMAIL_ACCOUNT = :email");
     $stmt->execute(['email' => $email]);
     return $stmt->fetchColumn();
 }
-
-
 
 ?>
 
@@ -71,8 +69,35 @@ function getTipoUtente($email) {
         <h1 class="mb-4">Svolgi Test: <?= htmlspecialchars($titoloTest) ?></h1>
         <form action="processaRisposteTest.php" method="post">
             <input type="hidden" name="titoloTest" value="<?= htmlspecialchars($titoloTest) ?>">
+            <?php
+            // Fetch the image from the TEST table
+            $imageData = $svolgimentoTestLogica->getTestImage($titoloTest);
+
+            // Display the image before the first question
+            if (!empty($imageData)) {
+                try {
+                    // Get image information
+                    $imageInfo = getimagesizefromstring($imageData);
+
+                    if ($imageInfo !== false) {
+                        $mimeType = $imageInfo['mime'];
+                    } else {
+                        throw new Exception('Failed to determine image type.');
+                    }
+            ?>
+                    <img src="data:<?= $mimeType ?>;base64,<?= base64_encode($imageData) ?>" alt="Test Image" class="img-fluid mb-4">
+                <?php } catch (Exception $ex) { ?>
+                    <!-- Display error message on the UI -->
+                    <div class="alert alert-danger" role="alert">
+                        Error displaying image: <?= $ex->getMessage() ?>
+                    </div>
+            <?php }
+            }
+            ?>
+            
             <?php foreach ($domande as $indice => $domanda) : ?>
                 <div class="domanda">
+                    <!-- Rest of the code to display the questions -->
                     <h5>Domanda <?= $indice + 1 ?>: <?= htmlspecialchars($domanda['descrizione']) ?></h5>
                     <?php if (isset($domanda['tipo']) && $domanda['tipo'] === 'codice') : ?>
                         <textarea name="risposta[<?= $domanda['ID'] ?>]" class="form-control" rows="4" placeholder="Inserisci qui il tuo codice SQL..."></textarea>
