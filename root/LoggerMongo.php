@@ -27,10 +27,10 @@ class LoggerMongo
         if ($count === 0) {
             // Collection doesn't exist, create it
             $this->database->createCollection($collectionName);
-            echo "Collection '$collectionName' created successfully.\n";
+            // Removed echo statement
         } else {
             // Collection already exists
-            echo "Collection '$collectionName' already exists.\n";
+            // Removed echo statement
         }
     }
 
@@ -45,8 +45,8 @@ class LoggerMongo
 
             $this->collection->insertOne($logEntry);
         } catch (Exception $e) {
-            // Gestisci eventuali errori durante l'inserimento del log
-            error_log('Errore durante l\'inserimento del log: ' . $e->getMessage());
+            // Handle any errors during log insertion
+            error_log('Error during log insertion: ' . $e->getMessage());
         }
     }
 }

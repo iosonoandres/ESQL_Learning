@@ -60,8 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <h1>Inserimento Test</h1>
         <!-- Sezione Creazione Test -->
     <form id="creaTestForm" method="POST" action="testLogica.php" enctype="multipart/form-data">
-        <label for="emailDocente">Email Docente:</label>
-        <input type="email" name="emailDocente" id="emailDocente" required>
+        
 
         <label for="titoloTest">Titolo del Test:</label>
         <input type="text" name="titoloTest" id="titoloTest" required>

@@ -1,15 +1,26 @@
 <?php
 // creazioneQuesitoLogica.php
-class CreazioneQuesitoLogica {
+
+//includi la classe LoggerMogo
+require_once __DIR__ . '../root/LoggerMongo.php';
+
+
+class CreazioneQuesitoLogica
+{
     private $pdo;
 
-    public function __construct() {
+    public function __construct()
+    {
         global $pdo;
         $this->pdo = $pdo;
     }
 
-    function creaQuesitoChiuso($titoloTest, $nomeTabella, $difficolta, $descrizione, $testo, $opzioniCorrette) {
+    function creaQuesitoChiuso($titoloTest, $nomeTabella, $difficolta, $descrizione, $testo, $opzioniCorrette)
+    {
         global $pdo;
+
+        // inizializza il logger
+        $logger = new LoggerMongo("mongodb://localhost:27017", "logDB");
 
         try {
             // La stored procedure è stata aggiornata per accettare i nuovi parametri.
@@ -20,6 +31,8 @@ class CreazioneQuesitoLogica {
 
             // Gestisci il successo dell'operazione, ad esempio salvando un messaggio in sessione o reindirizzando l'utente
             $_SESSION['message'] = 'Quesito chiuso creato con successo!';
+            $logger->logEvent('QuestionCreation', "Nuovo quesito chiuso inserito su $titoloTest");
+
             // Reindirizzamento opzionale a una pagina di successo
             // header('Location: pagina_di_successo.php');
             // exit();
@@ -27,6 +40,8 @@ class CreazioneQuesitoLogica {
         } catch (PDOException $e) {
             // Gestisci l'errore, ad esempio salvando un messaggio di errore in sessione o reindirizzando l'utente
             $_SESSION['error'] = 'Errore nella creazione del quesito chiuso: ' . $e->getMessage();
+            $logger->logEvent('FailedQuestionCreation', "tentativo fallito inserimento quesito chiuso su $titoloTest");
+
             // Reindirizzamento opzionale a una pagina di errore
             // header('Location: pagina_di_errore.php');
             // exit();
@@ -34,13 +49,41 @@ class CreazioneQuesitoLogica {
     }
 
 
-    public function creaQuesitoCodice($titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione) {
+    public function creaQuesitoCodice($titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione)
+    {
+        // inizializza il logger
+        $logger = new LoggerMongo("mongodb://localhost:27017", "logDB");
+
         try {
+            // Controllo se esiste già una tabella con lo stesso nome
+            $stmtCheckTable = $this->pdo->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?");
+            $stmtCheckTable->execute([$nomeTabSoluzione]);
+            $tableExists = $stmtCheckTable->fetchColumn();
+
+            // Se esiste una tabella con lo stesso nome, restituisce un messaggio di errore
+            if ($tableExists > 0) {
+                echo "Esiste già una tabella di soluzione con lo stesso nome: scegli un nome diverso.";
+                return false;
+            }
+
+            // Altrimenti, procedi con la creazione del quesito di codice
             $stmt = $this->pdo->prepare("CALL dbESQL.creazioneQuesitoCodiceConRisposte(?, ?, ?, ?, ?, ?)");
             $stmt->execute([$titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione]);
+            $logger->logEvent('QuestionCreation', "Nuovo quesito di codice inserito su $titoloTest");
             return true;
         } catch (PDOException $e) {
-            error_log('Errore nella creazione del quesito di codice: ' . $e->getMessage());
+            $errorMessage = $e->getMessage();
+
+            // Verifica se il messaggio di errore contiene la stringa specifica
+            if (strpos($errorMessage, "Esiste già una tabella di soluzione con lo stesso nome") !== false) {
+                // Messaggio personalizzato da mostrare nell'UI
+                echo "Esiste già una tabella di soluzione con lo stesso nome: scegli un nome diverso.";
+            } else {
+                // Altrimenti, gestisci l'errore come di consueto
+                error_log('Errore nella creazione del quesito di codice: ' . $errorMessage);
+                $logger->logEvent('FailedQuestionCreation', "tentativo fallito inserimento quesito di codice su $titoloTest");
+            }
+
             return false;
         }
     }
@@ -71,8 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $_SESSION['error'] = 'Errore nella creazione del quesito chiuso.';
         }
-    }
-     elseif (isset($_POST['creaQuesitoCodice'])) {
+    } elseif (isset($_POST['creaQuesitoCodice'])) {
         $soluzione = $_POST['soluzione'];
         $nomeTabSoluzione = $_POST['nomeTabSoluzione'];
         $successo = $creazioneQuesitoLogica->creaQuesitoCodice($titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione);
@@ -88,4 +130,3 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // header('Location: ' . ($_SESSION['message'] ? 'banana.php' : 'pagina_di_errore.php'));
     // exit();
 }
-?>

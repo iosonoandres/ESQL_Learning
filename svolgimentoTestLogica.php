@@ -110,28 +110,26 @@ class SvolgimentoTestLogica {
 
     // Funzione per inserire la risposta di codice di uno studente e verificarne l'esito
     public function inserisciRispostaCodiceStudente($emailStudente, $titoloTest, $idQuesito, $testoRisposta) {
-        try {
-            // Prepara la chiamata alla procedura
-            $stmt = $this->pdo->prepare("CALL dbESQL.InserisciRispostaCodiceStudente(:inputEmailStudente, :inputTitoloTest, :inputIDQuesito, :inputTestoRisposta)");
+    try {
+        // Prepara la chiamata alla procedura
+        $stmt = $this->pdo->prepare("CALL dbESQL.InserisciRispostaCodiceStudente(:inputEmailStudente, :inputTitoloTest, :inputIDQuesito, :inputTestoRisposta)");
 
-            // Associa i parametri
-            $stmt->bindParam(':inputEmailStudente', $emailStudente, PDO::PARAM_STR);
-            $stmt->bindParam(':inputTitoloTest', $titoloTest, PDO::PARAM_STR);
-            $stmt->bindParam(':inputIDQuesito', $idQuesito, PDO::PARAM_INT);
-            $stmt->bindParam(':inputTestoRisposta', $testoRisposta, PDO::PARAM_STR);
-            
+        // Associa i parametri
+        $stmt->bindParam(':inputEmailStudente', $emailStudente, PDO::PARAM_STR);
+        $stmt->bindParam(':inputTitoloTest', $titoloTest, PDO::PARAM_STR);
+        $stmt->bindParam(':inputIDQuesito', $idQuesito, PDO::PARAM_INT);
+        $stmt->bindParam(':inputTestoRisposta', $testoRisposta, PDO::PARAM_STR);
 
-            // Esegue la procedura
-            $stmt->execute();
+        // Esegue la procedura
+        $stmt->execute();
 
-            // Dopo l'esecuzione, l'esito della risposta (corretta o meno) sarà gestito dalla procedura stessa
-            // e riflettuto nelle modifiche al database (es. aggiornamento della tabella RISPOSTA)
-            return true;
-        } catch (PDOException $e) {
-            echo "Errore nell'inserimento della risposta di codice: " . $e->getMessage();
-            return false;
-        }
+        return true;
+    } catch (PDOException $e) {
+        echo "Errore nell'inserimento della risposta di codice: " . $e->getMessage();
+        return false;
     }
+}
+
 
 
 

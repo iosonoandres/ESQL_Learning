@@ -3,6 +3,11 @@ global $pdo;
 session_start();
 include "root/connect.php";
 
+//includi la classe LoggerMogo
+require_once __DIR__ . '../root/LoggerMongo.php';
+// inizializza il logger
+$logger = new LoggerMongo("mongodb://localhost:27017", "logDB");
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $email = $_POST["email"];
@@ -36,9 +41,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 window.location.href = "index.php";
             }, 3000); 
           </script>';
+          $logger->logEvent('SuccessfulRegistration', "Registrazione eseguita con successo per l'utente $email");
             exit();
         } else {
-            echo "Error: " . $stmt->errorInfo()[2];
+            $logger->logEvent('FailedRegistrationAttempt', "Tentativo di registrazione fallito per l'utente $email");
+
+            // Mantieni anche il vecchio sistema di logging
+            error_log("Error: " . $stmt->errorInfo()[2]);
         }
 
         $stmt->closeCursor();
@@ -92,8 +101,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 window.location.href = "index.php";
             }, 3000); // 3 seconds delay
           </script>';
+          $logger->logEvent('SuccessfulRegistration', "Registrazione eseguita con successo per l'utente $email");
             exit(); // Make sure to exit after the JavaScript code
         } else {
+            $logger->logEvent('FailedRegistrationAttempt', "Tentativo di registrazione fallito per l'utente $email");
             echo "Error: " . $stmt->errorInfo()[2]; // Use errorInfo to get the error message
         }
 

@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     require 'creazioneQuesitoLogica.php';
 }
 
+// funzione che recupera i test disponibili per il menu a tendina 
 function getSelectTest()
 {
     global $pdo;
@@ -41,6 +42,32 @@ function getSelectTest()
         return '<select class="form-control" name="titoloTest" id="titoloTest" required><option value="">Errore nel caricamento dei test</option></select>';
     }
 }
+
+// funzione che recupera le tabelle disponibili per il menu a tendina
+function getSelectTables()
+{
+    global $pdo;
+    try {
+        // Query per recuperare tutte le tabelle il cui nome è presente in TABELLA_DI_ESERCIZIO
+        $stmt = $pdo->prepare("SELECT DISTINCT t.table_name 
+                                FROM information_schema.tables t
+                                INNER JOIN dbESQL.TABELLA_DI_ESERCIZIO e ON t.table_name = e.nome
+                                WHERE t.table_schema = DATABASE()");
+        $stmt->execute();
+        $tables = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $selectHtml = '<select class="form-control" name="nomeTabella" id="nomeTabella" required>';
+        foreach ($tables as $table) {
+            $selectHtml .= '<option value="' . htmlspecialchars($table['table_name']) . '">' . htmlspecialchars($table['table_name']) . '</option>';
+        }
+        $selectHtml .= '</select>';
+        return $selectHtml;
+    } catch (PDOException $e) {
+        error_log('Errore durante il recupero delle tabelle: ' . $e->getMessage());
+        return '<select class="form-control" name="nomeTabella" id="nomeTabella" required><option value="">Errore nel caricamento delle tabelle</option></select>';
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -122,8 +149,9 @@ function getSelectTest()
 
                 <div class="form-group">
                     <label for="nomeTabella">Nome Tabella (separato da # per più tabelle):</label>
-                    <input type="text" class="form-control" name="nomeTabella" id="nomeTabella" required onchange="toggleTestField()">
+                    <?php echo getSelectTables(); ?>
                 </div>
+
 
                 <div class="form-group">
                     <label for="difficolta">Difficoltà:</label>
@@ -171,9 +199,10 @@ function getSelectTest()
                 </div>
 
                 <div class="form-group">
-                    <label for="nomeTabellaCodice">Nome Tabella (separato da # per più tabelle):</label>
-                    <input type="text" class="form-control" name="nomeTabella" id="nomeTabellaCodice" required>
+                    <label for="nomeTabella">Nome Tabella (separato da # per più tabelle):</label>
+                    <?php echo getSelectTables(); ?>
                 </div>
+
 
                 <div class="form-group">
                     <label for="difficoltaCodice">Difficoltà:</label>

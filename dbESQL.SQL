@@ -1064,8 +1064,10 @@ BEGIN
 			VALUES (rispostaData, inputEmailStudente); #INIZIALMENTE ESITO = FALSE
 
 			SET @syntaxValid := true;
-            CALL dbESQL.CheckSyntax(inputTestoRisposta, @syntaxValid);
+            SET @errorMessageOut := '';
+            CALL dbESQL.CheckSyntax(inputTestoRisposta, @syntaxValid, @errorMessageOut);
 		IF(@syntaxValid = true) THEN
+			
 
 			#attribuisco un nome ad una tabella risultante, che verrà poi eliminata, che deriva dall'applicazione della query dello studente
             CALL dbESQL.eseguiQueryESalvaInTabellaCorretta(inputTestoRisposta, 'tabOutputStudente'); 
@@ -1134,20 +1136,22 @@ DELIMITER $$
 
 CREATE PROCEDURE dbESQL.CheckSyntax(
     IN queryText TEXT,
-	OUT syntaxValid BOOLEAN
+	OUT syntaxValid BOOLEAN,
+    OUT errorMessageOut varchar(255)
 )
 BEGIN
     DECLARE errorOccurred INT DEFAULT 0;
     DECLARE errorMessage VARCHAR(255);
     
      SET syntaxValid = TRUE;
+     SET errorMessageOut = '';
 
     -- Prova ad eseguire la query per verificare la sintassi
     BEGIN
         -- Cattura l'errore
         DECLARE EXIT HANDLER FOR SQLEXCEPTION
         BEGIN
-            GET DIAGNOSTICS CONDITION 1 errorMessage = MESSAGE_TEXT;
+            GET DIAGNOSTICS CONDITION 1 errorMessageOut = MESSAGE_TEXT;
             SET errorOccurred = 1;
             SET syntaxValid = FALSE;
         END;
@@ -1160,7 +1164,7 @@ BEGIN
 
     -- Se si è verificato un errore, restituisci il messaggio di errore
     IF errorOccurred THEN
-        SELECT CONCAT('Errore: ', errorMessage) AS Message;
+        SELECT CONCAT('Errore: ', errorMessageOut) AS Message;
     ELSE
         -- Altrimenti, la query ha una sintassi corretta
         SELECT 'Query sintatticamente corretta.' AS Message;
