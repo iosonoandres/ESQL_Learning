@@ -4,6 +4,10 @@ session_start();
 
 require_once __DIR__ . '/root/connect.php';
 
+//includi la classe LoggerMogo
+require_once __DIR__ . '../root/LoggerMongo.php';
+
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST["azione"])) {
         $azione = $_POST["azione"];
@@ -13,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 gestisciCambioVisualizzazione($pdo);
                 break;
 
-            // Altre azioni, se necessario
+                // Altre azioni, se necessario
 
             default:
                 // Azione non supportata
@@ -22,7 +26,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-function gestisciCambioVisualizzazione($pdo) {
+function gestisciCambioVisualizzazione($pdo)
+{
+    // inizializza il logger
+    $logger = new LoggerMongo("mongodb://localhost:27017", "logDB");
+
     $titoloTest = $_POST['titoloTest'];
     $abilitaVisualizzazione = $_POST['abilitaVisualizzazione'];
 
@@ -37,9 +45,13 @@ function gestisciCambioVisualizzazione($pdo) {
 
         // Output o redirect a seconda della necessità
         echo "Operazione completata con successo!";
+        $logger->logEvent('ChangeTestView', "Visualizzazione test $titoloTest settato a " . ($abilitaVisualizzazione == 1 ? 'true' : 'false'));
     } catch (PDOException $e) {
         error_log('Errore nella modifica della visualizzazione: ' . $e->getMessage());
         echo "Errore nella modifica della visualizzazione. Consulta i log per ulteriori dettagli.";
+        $logger->logEvent(
+            'FailedChangeTestView',
+            "Errore settaggio visualizzazione test $titoloTest a " . ($abilitaVisualizzazione == 1 ? 'true' : 'false')
+        );
     }
 }
-?>

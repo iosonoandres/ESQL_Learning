@@ -72,8 +72,8 @@ CREATE TABLE dbESQL.TEST (
 CREATE TABLE dbESQL.SVOLGIMENTO (
     titoloTest VARCHAR(255),
 	emailStudente VARCHAR(255),
-    dataPrimaRisposta DATETIME default NULL,
-    dataUltimaRisposta DATETIME default NULL,
+    dataPrimaRisposta DATETIME,
+    dataUltimaRisposta DATETIME,
     stato ENUM ('Aperto', 'InCompletamento', 'Concluso') default 'Aperto',
     PRIMARY KEY(titoloTest, emailStudente),
     FOREIGN KEY (titoloTest) REFERENCES TEST(titolo),
@@ -965,12 +965,14 @@ BEGIN
         #se visualizza risposte è false, non è concluso
         IF inputTitoloTest IN (SELECT titolo FROM TEST where visualizzaRisposte=false) AND inputIDQuesito IN (SELECT ID from QUESITO) THEN
        
-                
-			IF NOT EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente) THEN
+			
+			IF EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente and dataPrimaRisposta IS NULL and dataUltimaRisposta IS NULL) THEN
     -- Se è la prima risposta, imposta sia la data della prima risposta che quella dell'ultima risposta
-				INSERT INTO SVOLGIMENTO (titoloTest, emailStudente, dataPrimaRisposta, dataUltimaRisposta)
-				VALUES (inputTitoloTest, inputEmailStudente, NOW(), NOW());
-			ELSEIF EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente and stato!='Concluso') THEN
+				UPDATE SVOLGIMENTO
+				SET dataUltimaRisposta = NOW(), dataPrimaRisposta = NOW()
+				WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente;
+			
+            ELSEIF EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente and stato!='Concluso' and dataPrimaRisposta IS NOT NULL and dataUltimaRisposta IS NOT NULL) THEN
     -- Se non è la prima risposta, aggiorna solo la data dell'ultima risposta
 				UPDATE SVOLGIMENTO
 				SET dataUltimaRisposta = NOW()
@@ -1047,19 +1049,23 @@ BEGIN
         IF inputTitoloTest IN (SELECT titolo FROM TEST where visualizzaRisposte=false) AND inputIDQuesito IN (SELECT ID from QUESITO) THEN
 			
 		 
-			IF NOT EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente) THEN
+			IF EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente and dataPrimaRisposta IS NULL and dataUltimaRisposta IS NULL) THEN
     -- Se è la prima risposta, imposta sia la data della prima risposta che quella dell'ultima risposta
-				INSERT INTO SVOLGIMENTO (titoloTest, emailStudente, dataPrimaRisposta, dataUltimaRisposta)
-				VALUES (inputTitoloTest, inputEmailStudente, rispostaData, rispostaData);
-			ELSEIF EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente and stato!='Concluso') THEN
+				UPDATE SVOLGIMENTO
+				SET dataUltimaRisposta = rispostaData, dataPrimaRisposta = rispostaData
+				WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente;
+			
+            ELSEIF EXISTS (SELECT * FROM SVOLGIMENTO WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente and stato!='Concluso' and dataPrimaRisposta IS NOT NULL and dataUltimaRisposta IS NOT NULL) THEN
     -- Se non è la prima risposta, aggiorna solo la data dell'ultima risposta
 				UPDATE SVOLGIMENTO
 				SET dataUltimaRisposta = rispostaData
 				WHERE titoloTest = inputTitoloTest AND emailStudente = inputEmailStudente;
-	
-			ELSE
+                 
+                 #se inserisce tutte le risposte corrette diventa concluso, devo controllare che non sia avvenuto
+			ELSE 
 					SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Il test è concluso';
 			END IF;
+            
 			INSERT INTO RISPOSTA (data, emailStudente)
 			VALUES (rispostaData, inputEmailStudente); #INIZIALMENTE ESITO = FALSE
 
