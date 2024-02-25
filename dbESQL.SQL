@@ -231,9 +231,12 @@ CREATE TRIGGER dbESQL.InserisciStudentiNuoviInSvolgimento
 AFTER INSERT ON STUDENTE
 FOR EACH ROW
 BEGIN
-	INSERT INTO SVOLGIMENTO (titoloTest, emailStudente, stato)
-    SELECT titolo, NEW.email, 'Aperto'
+
+INSERT INTO SVOLGIMENTO (titoloTest, emailStudente, stato)
+    SELECT titolo, NEW.email, 
+        CASE WHEN visualizzaRisposte = FALSE THEN 'Aperto' ELSE 'Concluso' END
     FROM TEST;
+    
 END;
 //
 
