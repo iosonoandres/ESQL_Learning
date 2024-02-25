@@ -11,6 +11,7 @@ if (!isset($_SESSION['user']['email'])) {
 
 $visualizzaTestEsitoLogica = new visualizzaTestEsitoLogica();
 $emailStudente = $_SESSION['user']['email'];
+$infoStudente = $visualizzaTestEsitoLogica->getNomeCognomeStudente($emailStudente);
 $testSvolti = $visualizzaTestEsitoLogica->getTestSvolti($emailStudente);
 
 ?>
@@ -70,25 +71,24 @@ $testSvolti = $visualizzaTestEsitoLogica->getTestSvolti($emailStudente);
 <body>
 
     <div class="container">
-        <h1 class="text-center">Test Svolti</h1>
-        <?php foreach ($testSvolti as $test) : ?>
+        <h1 class="text-center">Test Svolti - <?= htmlspecialchars($infoStudente['nome']) . " " . htmlspecialchars($infoStudente['cognome']) ?></h1>
+        <?php foreach ($testSvolti as $test): ?>
             <div class="test-item">
                 <div class="test-title"><?= htmlspecialchars($test['titolo']) ?></div>
                 <div class="test-date">Data: <?= htmlspecialchars($test['data']) ?></div>
                 <?php
-                $risposte = $guardaTestLogica->getRisposteStudente($emailStudente, $test['titolo']);
+                $risposte = $visualizzaTestEsitoLogica->getRisposteStudente($emailStudente, $test['titolo']);
                 foreach ($risposte as $risposta) {
-                    $classeRisposta = $risposta['corretta'] ? "risposta-corretta" : "risposta-errata";
-                    echo "<div class='$classeRisposta'>" . htmlspecialchars($risposta['descrizione']) . " - Risposta data: " . htmlspecialchars($risposta['rispostaData']) . "</div>";
+                    $classeRisposta = $risposta['esito'] ? "risposta-corretta" : "risposta-errata";
+                    echo "<div class='{$classeRisposta}'>" . htmlspecialchars($risposta['descrizione']) . " - Risposta data: " . htmlspecialchars($risposta['rispostaData']) . " - Esito: " . ($risposta['esito'] ? "Corretta" : "Errata") . "</div>";
                 }
                 ?>
             </div>
         <?php endforeach; ?>
-
     </div>
+
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 </body>
-
 </html>

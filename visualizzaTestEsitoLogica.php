@@ -29,6 +29,19 @@ class visualizzaTestEsitoLogica
         return $testDisponibili;
     }
 
+    // Metodo per recuperare il nome e il cognome dello studente
+    public function getNomeCognomeStudente($emailStudente) {
+        try {
+            $stmt = $this->pdo->prepare("SELECT nome, cognome FROM UTENTE WHERE email = :email");
+            $stmt->bindParam(':email', $emailStudente, PDO::PARAM_STR);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC); // Restituisce un array associativo con 'nome' e 'cognome'
+        } catch (PDOException $e) {
+            echo "Errore nel recupero del nome e cognome dello studente: " . $e->getMessage();
+            return null;
+        }
+    }
+
     // Nuovo metodo per recuperare i test svolti dall'utente
     public function getTestSvolti($emailStudente) {
         $testSvolti = [];
@@ -46,34 +59,49 @@ class visualizzaTestEsitoLogica
         return $testSvolti;
     }
 
-    // Nuovo metodo per recuperare le risposte fornite dall'utente a un test specifico
     public function getRisposteStudente($emailStudente, $titoloTest) {
         $risposte = [];
         try {
-            // Recupera tutte le domande e le risposte fornite dall'utente
-            $stmt = $this->pdo->prepare("SELECT q.ID, q.descrizione, q.difficoltà, q.tipo, 
-                                                rc.numerazioneOpzione AS rispostaData, o.opzioneCorretta
-                                         FROM QUESITO q
-                                         LEFT JOIN RISPOSTA_CHIUSA rc ON q.ID = rc.IDQuesito AND rc.titoloTest = q.titoloTest AND rc.emailStudente = :emailStudente
-                                         LEFT JOIN OPZIONE o ON rc.IDQuesito = o.idQuesitoChiusa AND rc.titoloTest = o.titoloTest AND rc.numerazioneOpzione = o.Numerazione
-                                         WHERE q.titoloTest = :titoloTest");
+            // Questa query aggrega le informazioni dalle risposte chiuse e di codice,
+            // unendole con i quesiti corrispondenti e recuperando nome e cognome dello studente.
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    q.ID AS quesitoID, 
+                    q.descrizione AS quesitoDescrizione, 
+                    CASE 
+                        WHEN rc.data IS NOT NULL THEN rc.data
+                        WHEN rcod.data IS NOT NULL THEN rcod.data
+                    END AS rispostaData,
+                    CASE 
+                        WHEN rc.esito IS NOT NULL THEN rc.esito
+                        WHEN rcod.esito IS NOT NULL THEN rcod.esito
+                    END AS rispostaEsito,
+                    u.nome AS studenteNome, 
+                    u.cognome AS studenteCognome
+                FROM QUESITO q
+                LEFT JOIN RISPOSTA_CHIUSA rc ON q.ID = rc.IDQuesito AND q.titoloTest = rc.titoloTest
+                LEFT JOIN RISPOSTA_CODICE rcod ON q.ID = rcod.IDQuesito AND q.titoloTest = rcod.titoloTest
+                INNER JOIN UTENTE u ON rc.emailStudente = u.email OR rcod.emailStudente = u.email
+                WHERE (rc.emailStudente = :emailStudente OR rcod.emailStudente = :emailStudente) 
+                AND q.titoloTest = :titoloTest
+                GROUP BY q.ID
+            ");
             $stmt->bindParam(':emailStudente', $emailStudente, PDO::PARAM_STR);
             $stmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
             $stmt->execute();
             $risposte = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Per ogni risposta, determina se è corretta o meno
-            foreach ($risposte as $key => $risposta) {
-                if ($risposta['tipo'] == 'chiusa') {
-                    $risposte[$key]['corretta'] = $risposta['rispostaData'] == $risposta['opzioneCorretta'];
-                }
-                // Aggiungi logica per altri tipi di domande se necessario
-            }
         } catch (PDOException $e) {
             echo "Errore nel recupero delle risposte dello studente: " . $e->getMessage();
         }
         return $risposte;
     }
+    
+    
+    
+    
+    
+    
+    
 
 
 
