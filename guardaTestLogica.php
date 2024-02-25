@@ -2,15 +2,18 @@
 // guardaTestLogica.php
 require_once __DIR__ . '/root/connect.php';
 
-class GuardaTestLogica {
+class GuardaTestLogica
+{
     private $pdo;
 
-    public function __construct() {
+    public function __construct()
+    {
         global $pdo;
         $this->pdo = $pdo;
     }
 
-    public function getTestDisponibili($emailStudente) {
+    public function getTestDisponibili($emailStudente)
+    {
         $testDisponibili = [];
         try {
             $stmt = $this->pdo->prepare("SELECT t.titolo, t.data 
@@ -27,24 +30,26 @@ class GuardaTestLogica {
     }
 
 
-    public function getTestImage($titoloTest) {
+    public function getTestImage($titoloTest)
+    {
         try {
             $stmt = $this->pdo->prepare("SELECT foto FROM TEST WHERE titolo = :titoloTest");
             $stmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
             $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
             if (!empty($result) && isset($result['foto'])) {
                 return $result['foto'];
             }
         } catch (PDOException $e) {
             echo "Errore nel recupero dell'immagine del test: " . $e->getMessage();
         }
-    
+
         return null;
     }
 
-    public function getDomandeTest($titoloTest) {
+    public function getDomandeTest($titoloTest)
+    {
         try {
             // Verifica se il test consente la visualizzazione delle risposte
             $stmtVisualizzaRisposte = $this->pdo->prepare("SELECT visualizzaRisposte FROM TEST WHERE titolo = :titoloTest");
@@ -81,7 +86,7 @@ class GuardaTestLogica {
                     $stmtOpzioni->bindParam(':idQuesito', $domanda['ID'], PDO::PARAM_INT);
                     $stmtOpzioni->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
                     $stmtOpzioni->execute();
-                    $opzioni = $stmtOpzioni->fetchAll(PDO::FETCH_ASSOC);           
+                    $opzioni = $stmtOpzioni->fetchAll(PDO::FETCH_ASSOC);
                     $domande[$key]['opzioni'] = $opzioni;
                 }
             }
@@ -92,4 +97,3 @@ class GuardaTestLogica {
         return []; // Ritorna un array vuoto in caso di errore
     }
 }
-?>

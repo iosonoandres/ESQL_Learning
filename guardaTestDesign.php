@@ -6,8 +6,12 @@ require_once __DIR__ . '/guardaTestLogica.php';
 
 // Controlla se l'utente è loggato e se è uno studente
 if (!isset($_SESSION['user']['email']) || getTipoUtente($_SESSION['user']['email']) != 'studente') {
-    header('Location: login.php');
-    exit();
+    
+}
+
+// Controlla se l'utente è loggato e se è un docente
+if (!isset($_SESSION['user']['email']) || getTipoUtente($_SESSION['user']['email']) != 'docente') {
+    // re-indirizzare docente a copiaGuardaTestDesign.php    
 }
 
 $titoloTest = isset($_GET['titoloTest']) ? $_GET['titoloTest'] : null;
