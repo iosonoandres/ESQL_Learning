@@ -104,7 +104,7 @@ function getTipoUtente($email)
             <div class="domanda">
                 <h5>Domanda <?= $indice + 1 ?>: <?= htmlspecialchars($domanda['descrizione']) ?></h5>
                 <?php if (isset($domanda['tipo']) && $domanda['tipo'] === 'codice') : ?>
-                    <p>Questa è una domanda a codice. Gli studenti non possono rispondere.</p>
+                    <p>Questa è una domanda a codice.</p>
                 <?php else : // Domande a risposta chiusa 
                 ?>
                     <?php foreach ($domanda['opzioni'] as $opzione) : ?>
