@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <label for="nomeTabella">Nome Tabella:</label>
         <input type="text" name="nomeTabella" id="nomeTabella" required>
 
-        <label for="metaDati">Metadati (LO SPAZIO SI USA SOLO TRA ATTRIBUTO PRECEDENTE E SUCCESSIVO id#INT#true# nome#text#false# anni#INT#false#):</label>
+        <label for="metaDati">Metadati (LO SPAZIO SI USA SOLO TRA ATTRIBUTO PRECEDENTE E SUCCESSIVO, ESEMPIO: id#INT#true# nome#text#false# anni#INT#false# (Spiegazione: settiamo il primo elemento id ad INT e poi con il true o false determiniamo se sia o meno una chiave primaria, e cosi' via) ):</label>
         <textarea name="metaDati" id="metaDati" rows="4" required></textarea>
 
         <label for="integritaReferenziale">Integrità Referenziale (attrib1#attrib2#tab2# Lasciare vuota nel caso non ci siano):</label>

@@ -53,7 +53,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST["password"];
 
     if (attempt_login($pdo, $email, $password)) {
-        echo '<script>alert("Accesso eseguito con successo!"); window.location.href = "dashboard.php";</script>';
+        echo '<script>alert("Accesso eseguito con successo! Verrai reinderizzato alla dashboard"); window.location.href = "dashboard.php";</script>';
         exit();
     } else {
         $loginError = "Errore durante l'accesso. Assicurati che tutti i dati di accesso siano corretti."; 

@@ -58,7 +58,7 @@ function gestisciCreazioneTest($pdo)
         $stmt->closeCursor();
 
         // Output o redirect a seconda della necessità
-        echo "Test creato con successo!";
+        echo '<script>alert("Test creato con successo! Verrai reinderizzato alla dashboard"); window.location.href = "dashboard.php";</script>';
         $logger->logEvent('TestCreation', "Test $titoloTest creato con successo dall'utente $emailDocente");
     } catch (PDOException $e) {
         error_log('Errore nella creazione del test: ' . $e->getMessage());

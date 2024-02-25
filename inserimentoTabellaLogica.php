@@ -42,7 +42,8 @@ function inserisciTabellaEsercizio($inputNomeTabella, $inputEmailDocente, $metaD
 
         // Return the result
         $logger->logEvent('TableCreation', "Creata tabella $inputNomeTabella da $emailDocente");
-        return 'Tabella creata con successo!';
+         
+        return '<script>alert("Tabella creata correttamente! Verrai reinderizzato alla dashboard"); window.location.href = "dashboard.php";</script>';
         return $result['Messaggio'];
     } catch (PDOException $e) {
         // Handle exceptions here

@@ -1,8 +1,10 @@
 <?php
-// svolgimentoTestDesign.php
 session_start();
 require_once __DIR__ . '/root/connect.php';
 require_once __DIR__ . '/SvolgimentoTestLogica.php';
+
+ini_set('error_log', 'C:/xampp/logs/phplog.log');
+
 
 // Controlla se l'utente è loggato e se è uno studente
 if (!isset($_SESSION['user']['email']) || getTipoUtente($_SESSION['user']['email']) != 'studente') {
@@ -18,9 +20,27 @@ if (!$titoloTest) {
 
 $svolgimentoTestLogica = new SvolgimentoTestLogica();
 $domande = $svolgimentoTestLogica->getDomandeTest($titoloTest);
+$numeroDomande = count($domande);
 
-function getTipoUtente($email)
-{
+$indiceCorrente = isset($_GET['indice']) ? intval($_GET['indice']) : 0;
+if ($indiceCorrente >= $numeroDomande) {
+    $indiceCorrente = $numeroDomande - 1; // Assicura che l'indice non superi il numero di domande
+}
+$domandaCorrente = isset($domande[$indiceCorrente]) ? $domande[$indiceCorrente] : null;
+
+// Recupera i dati dell'immagine del test
+$imageData = $svolgimentoTestLogica->getTestImage($titoloTest);
+$mimeType = 'image/jpeg'; // Imposta un valore predefinito per mimeType
+if (!empty($imageData)) {
+    $imageInfo = getimagesizefromstring($imageData);
+    if ($imageInfo !== false) {
+        $mimeType = $imageInfo['mime'];
+    } else {
+        $imageData = null; // Gestisci il caso in cui l'immagine non sia valida
+    }
+}
+
+function getTipoUtente($email) {
     global $pdo;
     $stmt = $pdo->prepare("SELECT TIPO_ACCOUNT FROM ACCOUNT WHERE EMAIL_ACCOUNT = :email");
     $stmt->execute(['email' => $email]);
@@ -31,7 +51,6 @@ function getTipoUtente($email)
 
 <!DOCTYPE html>
 <html lang="it">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -43,7 +62,6 @@ function getTipoUtente($email)
             background-color: #f7f7f7;
             color: #565656;
         }
-
         .container {
             padding: 20px;
             max-width: 800px;
@@ -52,7 +70,6 @@ function getTipoUtente($email)
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
         }
-
         .domanda {
             margin-bottom: 20px;
             padding: 10px;
@@ -62,65 +79,53 @@ function getTipoUtente($email)
         }
     </style>
 </head>
-
 <body>
-
-    <div class="container">
-        <h1 class="mb-4">Svolgi Test: <?= htmlspecialchars($titoloTest) ?></h1>
-        <form action="processaRisposteTest.php" method="post">
+<div class="container">
+    <h1 class="mb-4">Svolgi Test: <?= htmlspecialchars($titoloTest) ?></h1>
+    <?php if ($domandaCorrente): ?>
+        <form action="processaRispostaSingola.php" method="post">
             <input type="hidden" name="titoloTest" value="<?= htmlspecialchars($titoloTest) ?>">
+            <input type="hidden" name="indice" value="<?= $indiceCorrente ?>">
+            
             <?php
-            // Fetch the image from the TEST table
-            $imageData = $svolgimentoTestLogica->getTestImage($titoloTest);
-
-            // Display the image before the first question
-            if (!empty($imageData)) {
-                try {
-                    // Get image information
-                    $imageInfo = getimagesizefromstring($imageData);
-
-                    if ($imageInfo !== false) {
-                        $mimeType = $imageInfo['mime'];
-                    } else {
-                        throw new Exception('Failed to determine image type.');
-                    }
-            ?>
-                    <img src="data:<?= $mimeType ?>;base64,<?= base64_encode($imageData) ?>" alt="Test Image" class="img-fluid mb-4">
-                <?php } catch (Exception $ex) { ?>
-                    <!-- Display error message on the UI -->
-                    <div class="alert alert-danger" role="alert">
-                        Error displaying image: <?= $ex->getMessage() ?>
-                    </div>
-            <?php }
+            // Visualizza l'immagine del test solo prima della prima domanda
+            if ($indiceCorrente == 0 && !empty($imageData)) {
+                echo '<img src="data:' . htmlspecialchars($mimeType) . ';base64,' . base64_encode($imageData) . '" alt="Test Image" class="img-fluid mb-4">';
             }
             ?>
-            
-            <?php foreach ($domande as $indice => $domanda) : ?>
-                <div class="domanda">
-                    <!-- Rest of the code to display the questions -->
-                    <h5>Domanda <?= $indice + 1 ?>: <?= htmlspecialchars($domanda['descrizione']) ?></h5>
-                    <?php if (isset($domanda['tipo']) && $domanda['tipo'] === 'codice') : ?>
-                        <textarea name="risposta[<?= $domanda['ID'] ?>]" class="form-control" rows="4" placeholder="Inserisci qui il tuo codice SQL..."></textarea>
-                    <?php else : // Domande a risposta chiusa 
-                    ?>
-                        <?php foreach ($domanda['opzioni'] as $opzione) : ?>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="risposta[<?= $domanda['ID'] ?>]" id="opzione<?= $opzione['Numerazione'] ?>" value="<?= $opzione['Numerazione'] ?>">
-                                <label class="form-check-label" for="opzione<?= $opzione['Numerazione'] ?>">
-                                    <?= htmlspecialchars($opzione['testo']) ?>
-                                </label>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
-            <button type="submit" class="btn btn-primary">Invia Risposte</button>
-        </form>
-    </div>
 
+            <div class="domanda">
+                <h5>Domanda <?= $indiceCorrente + 1 ?>: <?= htmlspecialchars($domandaCorrente['descrizione']) ?></h5>
+                <?php if ($domandaCorrente['tipo'] === 'codice'): ?>
+                    <textarea name="risposta[<?= $domandaCorrente['ID'] ?>]" class="form-control" rows="4" placeholder="Inserisci qui il tuo codice SQL..."></textarea>
+                <?php else: ?>
+                    <?php foreach ($domandaCorrente['opzioni'] as $opzione): ?>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="risposta[<?= $domandaCorrente['ID'] ?>]" id="opzione<?= $opzione['Numerazione'] ?>" value="<?= $opzione['Numerazione'] ?>">
+                            <label class="form-check-label" for="opzione<?= $opzione['Numerazione'] ?>">
+                                <?= htmlspecialchars($opzione['testo']) ?>
+                            </label>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+
+            <!-- Bottoni di navigazione -->
+            <?php if ($indiceCorrente > 0): ?>
+                <a href="?titoloTest=<?= urlencode($titoloTest) ?>&indice=<?= $indiceCorrente - 1 ?>" class="btn btn-secondary">Precedente</a>
+            <?php endif; ?>
+            <?php if ($indiceCorrente < $numeroDomande - 1): ?>
+                <button type="submit" name="azione" value="prossima" class="btn btn-primary">Prossima</button>
+            <?php else: ?>
+                <button type="submit" name="azione" value="fine" class="btn btn-success">Fine Test</button>
+            <?php endif; ?>
+        </form>
+    <?php else: ?>
+        <p>Non ci sono domande disponibili per questo test.</p>
+    <?php endif; ?>
+</div>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 </body>
-
 </html>
