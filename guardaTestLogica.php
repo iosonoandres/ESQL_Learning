@@ -57,11 +57,6 @@ class GuardaTestLogica
             $stmtVisualizzaRisposte->execute();
             $visualizzaRisposte = $stmtVisualizzaRisposte->fetchColumn();
 
-            // Se visualizzaRisposte è uguale a 0, mostra un messaggio informativo e interrompi l'esecuzione
-            if ($visualizzaRisposte == 0) {
-                echo "Il docente non ha abilitato la visualizzazione di questo test. Controllare più tardi.";
-                return []; // Ritorna un array vuoto, poiché non ci sono domande da visualizzare
-            }
 
             // Seleziona tutte le domande del test
             $stmt = $this->pdo->prepare("SELECT q.ID, q.descrizione, q.difficoltà, 'codice' AS tipo 
@@ -95,5 +90,24 @@ class GuardaTestLogica
             echo "Errore nel recupero delle domande: " . $e->getMessage();
         }
         return []; // Ritorna un array vuoto in caso di errore
+    }
+
+    public function getSketchTextForQuestion($idQuesitoCodice, $titoloTest)
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT Sketch FROM SOLUZIONE WHERE IdQuesitoCodice = :idQuesitoCodice AND titoloTest = :titoloTest");
+            $stmt->bindParam(':idQuesitoCodice', $idQuesitoCodice, PDO::PARAM_INT);
+            $stmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!empty($result) && isset($result['Sketch'])) {
+                return $result['Sketch'];
+            }
+        } catch (PDOException $e) {
+            echo "Error retrieving sketch text: " . $e->getMessage();
+        }
+
+        return null;
     }
 }

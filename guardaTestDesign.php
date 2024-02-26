@@ -4,15 +4,6 @@ session_start();
 require_once __DIR__ . '/root/connect.php';
 require_once __DIR__ . '/guardaTestLogica.php';
 
-// Controlla se l'utente è loggato e se è uno studente
-if (!isset($_SESSION['user']['email']) || getTipoUtente($_SESSION['user']['email']) != 'studente') {
-    
-}
-
-// Controlla se l'utente è loggato e se è un docente
-if (!isset($_SESSION['user']['email']) || getTipoUtente($_SESSION['user']['email']) != 'docente') {
-    // re-indirizzare docente a copiaGuardaTestDesign.php    
-}
 
 $titoloTest = isset($_GET['titoloTest']) ? $_GET['titoloTest'] : null;
 if (!$titoloTest) {
@@ -108,28 +99,36 @@ function getTipoUtente($email)
             <div class="domanda">
                 <h5>Domanda <?= $indice + 1 ?>: <?= htmlspecialchars($domanda['descrizione']) ?></h5>
                 <?php if (isset($domanda['tipo']) && $domanda['tipo'] === 'codice') : ?>
-                    <p>Questa è una domanda a codice.</p>
+                    <!-- Display sketch text for questions of type 'codice' -->
+                    <?php
+                    $sketchText = $guardaTestLogica->getSketchTextForQuestion($domanda['ID'], $titoloTest);
+                    if ($sketchText !== null) :
+                    ?>
+                        <p><strong>Soluzione Corretta:</strong> <?= htmlspecialchars($sketchText) ?></p>
+                    <?php endif; ?>
                 <?php else : // Domande a risposta chiusa 
                 ?>
-                    <?php foreach ($domanda['opzioni'] as $opzione) : ?>
-                        <div class="form-check">
-                            <?php
-                            $numerazione = $opzione['Numerazione'];
-                            $opzioneCorretta = $opzione['opzioneCorretta'];
-                            $isChecked = (strpos($opzioneCorretta, $numerazione) !== false) ? ' corretta' : '';
-                            ?>
-                            <input class="form-check-input" type="radio" name="risposta[<?= $domanda['ID'] ?>]" id="opzione<?= $numerazione ?>" value="<?= $numerazione ?>" disabled <?= $isChecked ? 'checked' : '' ?>>
-                            <label class="form-check-label <?= $isChecked ? 'corretta' : '' ?>" for="opzione<?= $numerazione ?>">
-                                <?= htmlspecialchars($opzione['testo']) ?>
-                            </label>
-
-                        </div>
-                    <?php endforeach; ?>
-
-
+                    <?php if (isset($domanda['opzioni']) && is_array($domanda['opzioni'])) : ?>
+                        <?php foreach ($domanda['opzioni'] as $opzione) : ?>
+                            <div class="form-check">
+                                <?php
+                                $numerazione = $opzione['Numerazione'];
+                                $opzioneCorretta = $opzione['opzioneCorretta'];
+                                $isChecked = (strpos($opzioneCorretta, $numerazione) !== false) ? ' corretta' : '';
+                                ?>
+                                <input class="form-check-input" type="radio" name="risposta[<?= $domanda['ID'] ?>]" id="opzione<?= $numerazione ?>" value="<?= $numerazione ?>" disabled <?= $isChecked ? 'checked' : '' ?>>
+                                <label class="form-check-label <?= $isChecked ? 'corretta' : '' ?>" for="opzione<?= $numerazione ?>">
+                                    <?= htmlspecialchars($opzione['testo']) ?>
+                                </label>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         <?php endforeach; ?>
+
+
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
