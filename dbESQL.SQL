@@ -14,21 +14,21 @@ CREATE TABLE dbESQL.ACCOUNT (
 	PASSWORD VARCHAR (50) NOT NULL,
     TIPO_ACCOUNT ENUM ('docente', 'studente'),
     PRIMARY KEY (EMAIL_ACCOUNT),
-	FOREIGN KEY (EMAIL_ACCOUNT) REFERENCES UTENTE(email)
+	FOREIGN KEY (EMAIL_ACCOUNT) REFERENCES UTENTE(email) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.DOCENTE (
     email VARCHAR(255) PRIMARY KEY,
     corso VARCHAR(255),
     dipartimento VARCHAR(255),
-    FOREIGN KEY (email) REFERENCES UTENTE(email)
+    FOREIGN KEY (email) REFERENCES UTENTE(email) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.STUDENTE (
     email VARCHAR(255) PRIMARY KEY,
     codice CHAR(16),
     annoImmatricolazione INT,
-    FOREIGN KEY (email) REFERENCES UTENTE(email)
+    FOREIGN KEY (email) REFERENCES UTENTE(email) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.TABELLA_DI_ESERCIZIO (
@@ -37,7 +37,7 @@ CREATE TABLE dbESQL.TABELLA_DI_ESERCIZIO (
     data DATETIME,
     num_righe INT default 0,
     PRIMARY KEY (nome),
-    FOREIGN KEY (emailDocente) REFERENCES DOCENTE(email)
+    FOREIGN KEY (emailDocente) REFERENCES DOCENTE(email) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.ATTRIBUTO (
@@ -46,7 +46,7 @@ CREATE TABLE dbESQL.ATTRIBUTO (
     tipo VARCHAR(255),
     primaria boolean,
     PRIMARY KEY (nome, nomeTabella),
-    FOREIGN KEY (nomeTabella) REFERENCES TABELLA_DI_ESERCIZIO(nome)
+    FOREIGN KEY (nomeTabella) REFERENCES TABELLA_DI_ESERCIZIO(nome) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.INTEGRITA_REFERENZIALE (
@@ -55,8 +55,8 @@ CREATE TABLE dbESQL.INTEGRITA_REFERENZIALE (
     Tabella1 VARCHAR(20),
     Tabella2 VARCHAR(20),
     PRIMARY KEY (Attributo1, Attributo2, Tabella1, Tabella2),
-    FOREIGN KEY (Attributo1,Tabella1) REFERENCES ATTRIBUTO(nome,nomeTabella),
-    FOREIGN KEY (Attributo2, Tabella2) REFERENCES ATTRIBUTO(nome, nomeTabella)
+    FOREIGN KEY (Attributo1,Tabella1) REFERENCES ATTRIBUTO(nome,nomeTabella) ON DELETE CASCADE,
+    FOREIGN KEY (Attributo2, Tabella2) REFERENCES ATTRIBUTO(nome, nomeTabella) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.TEST (
@@ -65,7 +65,7 @@ CREATE TABLE dbESQL.TEST (
     foto MEDIUMBLOB,
     visualizzaRisposte BOOLEAN default false,
     emailDocente VARCHAR(255),
-    FOREIGN KEY (emailDocente) REFERENCES DOCENTE(email)
+    FOREIGN KEY (emailDocente) REFERENCES DOCENTE(email) ON DELETE CASCADE
 );
 
 
@@ -76,8 +76,8 @@ CREATE TABLE dbESQL.SVOLGIMENTO (
     dataUltimaRisposta DATETIME,
     stato ENUM ('Aperto', 'InCompletamento', 'Concluso') default 'Aperto',
     PRIMARY KEY(titoloTest, emailStudente),
-    FOREIGN KEY (titoloTest) REFERENCES TEST(titolo),
-    FOREIGN KEY (emailStudente) REFERENCES STUDENTE(email)
+    FOREIGN KEY (titoloTest) REFERENCES TEST(titolo) ON DELETE CASCADE,
+    FOREIGN KEY (emailStudente) REFERENCES STUDENTE(email) ON DELETE CASCADE
 );
 
 
@@ -90,7 +90,7 @@ CREATE TABLE dbESQL.QUESITO (
     difficoltà ENUM ('Basso', 'Medio', 'Alto'),
     descrizione TEXT,
     PRIMARY KEY (ID, titoloTest),
-    FOREIGN KEY (titoloTest) REFERENCES TEST(titolo)
+    FOREIGN KEY (titoloTest) REFERENCES TEST(titolo) ON DELETE CASCADE
 );
 
 
@@ -99,8 +99,8 @@ CREATE TABLE dbESQL.RIFERIMENTO (
     IDquesito INT,
     titoloTest VARCHAR(255),
     PRIMARY KEY (nomeTabella, IDquesito, titoloTest),
-    FOREIGN KEY (nomeTabella) REFERENCES TABELLA_DI_ESERCIZIO(nome),
-    FOREIGN KEY (IDquesito, titoloTest) REFERENCES QUESITO(ID, titoloTest)
+    FOREIGN KEY (nomeTabella) REFERENCES TABELLA_DI_ESERCIZIO(nome) ON DELETE CASCADE,
+    FOREIGN KEY (IDquesito, titoloTest) REFERENCES QUESITO(ID, titoloTest) ON DELETE CASCADE
 );
 
 
@@ -109,14 +109,14 @@ CREATE TABLE dbESQL.QUESITO_A_RISPOSTA_CHIUSA (
     ID INT,
     titoloTest VARCHAR(255),
     PRIMARY KEY (ID, titoloTest),
-    FOREIGN KEY (ID, titoloTest) REFERENCES QUESITO(ID, titoloTest)
+    FOREIGN KEY (ID, titoloTest) REFERENCES QUESITO(ID, titoloTest) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.QUESITO_DI_CODICE (
     ID INT,
     titoloTest VARCHAR(255),
     PRIMARY KEY (ID, titoloTest),
-    FOREIGN KEY (ID, titoloTest) REFERENCES QUESITO(ID, titoloTest)
+    FOREIGN KEY (ID, titoloTest) REFERENCES QUESITO(ID, titoloTest) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.OPZIONE (
@@ -126,7 +126,7 @@ CREATE TABLE dbESQL.OPZIONE (
     titoloTest VARCHAR(255),
     opzioneCorretta TEXT, #risposta corretta, text perchè può esserci più di una
     PRIMARY KEY (Numerazione, idQuesitoChiusa, titoloTest),
-    FOREIGN KEY (idQuesitoChiusa, titoloTest) REFERENCES QUESITO_A_RISPOSTA_CHIUSA(ID, titoloTest)
+    FOREIGN KEY (idQuesitoChiusa, titoloTest) REFERENCES QUESITO_A_RISPOSTA_CHIUSA(ID, titoloTest) ON DELETE CASCADE
 );
 
 
@@ -137,7 +137,7 @@ CREATE TABLE dbESQL.SOLUZIONE (
     titoloTest VARCHAR(255),
     nomeTabOutputDocente VARCHAR(255),
     PRIMARY KEY (ID),
-    FOREIGN KEY (idQuesitoCodice, titoloTest) REFERENCES QUESITO_DI_CODICE(ID,titoloTest)
+    FOREIGN KEY (idQuesitoCodice, titoloTest) REFERENCES QUESITO_DI_CODICE(ID,titoloTest) ON DELETE CASCADE
 );
 
 
@@ -146,7 +146,7 @@ CREATE TABLE dbESQL.RISPOSTA (
     emailStudente VARCHAR(255),
     esito BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (data, emailStudente),
-    FOREIGN KEY (emailStudente) REFERENCES STUDENTE(email)
+    FOREIGN KEY (emailStudente) REFERENCES STUDENTE(email) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.RISPOSTA_CHIUSA (
@@ -156,8 +156,8 @@ CREATE TABLE dbESQL.RISPOSTA_CHIUSA (
     emailStudente VARCHAR(255),
     numerazioneOpzione INT,
     PRIMARY KEY (data, emailStudente),
-    FOREIGN KEY (data, emailStudente) REFERENCES RISPOSTA(data, emailStudente),
-    FOREIGN KEY (numerazioneOpzione, IDQuesito, titoloTest) REFERENCES OPZIONE(Numerazione,IDQuesitoChiusa, titoloTest)
+    FOREIGN KEY (data, emailStudente) REFERENCES RISPOSTA(data, emailStudente) ON DELETE CASCADE,
+    FOREIGN KEY (numerazioneOpzione, IDQuesito, titoloTest) REFERENCES OPZIONE(Numerazione,IDQuesitoChiusa, titoloTest) ON DELETE CASCADE
 );
 
 
@@ -168,8 +168,8 @@ CREATE TABLE dbESQL.RISPOSTA_CODICE (
     emailStudente VARCHAR(255),
     testoRisposta TEXT,
     PRIMARY KEY (data, emailStudente),
-    FOREIGN KEY (data, emailStudente) REFERENCES RISPOSTA(data, emailStudente),
-	FOREIGN KEY (IDQuesito, titoloTest) REFERENCES QUESITO_DI_CODICE(ID, titoloTest)
+    FOREIGN KEY (data, emailStudente) REFERENCES RISPOSTA(data, emailStudente) ON DELETE CASCADE,
+	FOREIGN KEY (IDQuesito, titoloTest) REFERENCES QUESITO_DI_CODICE(ID, titoloTest) ON DELETE CASCADE
 );
 
 
@@ -183,9 +183,9 @@ CREATE TABLE dbESQL.MESSAGGIO (
     emailDocenteDestinatario VARCHAR(255),
     PRIMARY KEY (titolo, titoloTest, data),
     FOREIGN KEY (titoloTest) REFERENCES TEST(titolo),
-    FOREIGN KEY (emailStudenteMittente) REFERENCES STUDENTE(email),
-    FOREIGN KEY (emailDocenteMittente) REFERENCES DOCENTE(email),
-    FOREIGN KEY (emailDocenteDestinatario) REFERENCES DOCENTE(email)
+    FOREIGN KEY (emailStudenteMittente) REFERENCES STUDENTE(email) ON DELETE CASCADE,
+    FOREIGN KEY (emailDocenteMittente) REFERENCES DOCENTE(email) ON DELETE CASCADE,
+    FOREIGN KEY (emailDocenteDestinatario) REFERENCES DOCENTE(email) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.DESTINATARIO_STU (
@@ -194,15 +194,15 @@ CREATE TABLE dbESQL.DESTINATARIO_STU (
     titoloTest VARCHAR(255),
     data DATETIME,
     PRIMARY KEY (emailStudente, titoloMessaggio, titoloTest, data),
-    FOREIGN KEY (emailStudente) REFERENCES STUDENTE(email),
-    FOREIGN KEY (titoloMessaggio, titoloTest, data) REFERENCES MESSAGGIO(titolo, titoloTest, data)
+    FOREIGN KEY (emailStudente) REFERENCES STUDENTE(email) ON DELETE CASCADE,
+    FOREIGN KEY (titoloMessaggio, titoloTest, data) REFERENCES MESSAGGIO(titolo, titoloTest, data) ON DELETE CASCADE
 );
 
 CREATE TABLE dbESQL.RIGA (
 	nomeTabella varchar(255),
     valori varchar(255),
 	PRIMARY KEY(nomeTabella, valori),
-    FOREIGN KEY (nomeTabella) REFERENCES TABELLA_DI_ESERCIZIO(nome)
+    FOREIGN KEY (nomeTabella) REFERENCES TABELLA_DI_ESERCIZIO(nome) ON DELETE CASCADE
 );
 
 
@@ -1227,8 +1227,6 @@ BEGIN
     EXECUTE createStmt;
     DEALLOCATE PREPARE createStmt;
     
-
-
     
 END$$
 
@@ -1236,50 +1234,38 @@ DELIMITER ;
 
 
 
-
 DELIMITER //
 
-CREATE PROCEDURE dbESQL.VisualizzaEsitoStudente(
+CREATE PROCEDURE dbESQL.visualizzaEsitoStudente (
     IN inputEmailStudente VARCHAR(255),
     IN inputTitoloTest VARCHAR(255),
-    IN inputIDQuesito INT,
-    IN inputData DATETIME
+    IN inputIdQuesito INT,
+    OUT esitoOut BOOLEAN
 )
 BEGIN
-	
-    IF inputEmailStudente IN (SELECT email FROM STUDENTE) THEN
-    
-    IF inputIDQuesito IN (select IDquesito from RISPOSTA_CHIUSA where emailStudente = inputEmailStudente) THEN
+    DECLARE ultimaRisposta DATETIME;
 
-        
-		IF((SELECT esito
-        FROM RISPOSTA JOIN RISPOSTA_CHIUSA ON RISPOSTA.data = RISPOSTA_CHIUSA.data AND RISPOSTA.emailStudente = RISPOSTA_CHIUSA.emailStudente
-        WHERE RISPOSTA.data = inputData)=true) THEN
-		
-			SELECT 'ESITO: POSITIVO';
-        ELSE
-			SELECT 'ESITO: NEGATIVO';
-        END IF;
-        
-    ELSEIF inputIDQuesito IN (select IDquesito from RISPOSTA_CODICE where emailStudente = inputEmailStudente) THEN
-        
-        IF((SELECT esito
-        FROM RISPOSTA JOIN RISPOSTA_CODICE ON RISPOSTA.data = RISPOSTA_CODICE.data AND RISPOSTA.emailStudente = RISPOSTA_CODICE.emailStudente
-        WHERE RISPOSTA.data = inputData)=true) THEN
-		
-			SELECT 'ESITO: POSITIVO';
-        ELSE
-			SELECT 'ESITO: NEGATIVO';
-        END IF;
-    ELSE
-        SELECT 'Lo studente non ha risposto al quesito specificato del test.';
-	END IF;
-    ELSE
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'L\'email specificata non appartiene a uno studente';
-    END IF;
-END //
+    -- Trova la data dell'ultima risposta per il quesito specificato
+    SELECT MAX(data) INTO ultimaRisposta
+    FROM RISPOSTA
+    WHERE emailStudente = inputEmailStudente
+    AND EXISTS (
+        SELECT 1
+        FROM QUESITO
+        WHERE ID = inputIdQuesito
+        AND titoloTest = inputTitoloTest
+    );
+
+    -- Ottiene l'esito dell'ultima risposta
+    SELECT esito INTO esitoOut
+    FROM RISPOSTA
+    WHERE emailStudente = inputEmailStudente
+    AND data = ultimaRisposta;
+END//
 
 DELIMITER ;
+
+
 
 
 #Inserimento di	un	messaggio
