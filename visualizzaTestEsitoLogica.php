@@ -29,6 +29,34 @@ class visualizzaTestEsitoLogica
         return $testDisponibili;
     }
 
+    public function getRisposteStudente($emailStudente, $titoloTest) {
+        $risposte = [];
+        try {
+            // Ottenere l'elenco dei quesiti per il test specificato
+            $quesitiStmt = $this->pdo->prepare("SELECT ID, descrizione FROM QUESITO WHERE titoloTest = :titoloTest");
+            $quesitiStmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
+            $quesitiStmt->execute();
+            $quesiti = $quesitiStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+            // Per ogni quesito, ottenere l'esito tramite la stored procedure e includere la descrizione
+            foreach ($quesiti as $quesito) {
+                $esito = $this->getEsitoRisposta($emailStudente, $titoloTest, $quesito['ID']);
+                // Aggiungere l'esito, la descrizione e le altre informazioni necessarie all'array $risposte
+                $risposte[] = [
+                    'ID' => $quesito['ID'],
+                    'descrizione' => $quesito['descrizione'], // Aggiunta della descrizione del quesito
+                    'esito' => $esito
+                    // Aggiungi altre informazioni se necessario
+                ];
+            }
+        } catch (PDOException $e) {
+            echo "Errore nel recupero delle risposte dello studente: " . $e->getMessage();
+        }
+        return $risposte;
+    }
+    
+    
+
     // Metodo per recuperare il nome e il cognome dello studente
     public function getNomeCognomeStudente($emailStudente) {
         try {
@@ -59,42 +87,27 @@ class visualizzaTestEsitoLogica
         return $testSvolti;
     }
 
-    public function getRisposteStudente($emailStudente, $titoloTest) {
-        $risposte = [];
+    public function getEsitoRisposta($emailStudente, $titoloTest, $idQuesito) {
+        $esitoOut = null;
         try {
-            // Questa query aggrega le informazioni dalle risposte chiuse e di codice,
-            // unendole con i quesiti corrispondenti e recuperando nome e cognome dello studente.
-            $stmt = $this->pdo->prepare("
-                SELECT 
-                    q.ID AS quesitoID, 
-                    q.descrizione AS quesitoDescrizione, 
-                    CASE 
-                        WHEN rc.data IS NOT NULL THEN rc.data
-                        WHEN rcod.data IS NOT NULL THEN rcod.data
-                    END AS rispostaData,
-                    CASE 
-                        WHEN rc.esito IS NOT NULL THEN rc.esito
-                        WHEN rcod.esito IS NOT NULL THEN rcod.esito
-                    END AS rispostaEsito,
-                    u.nome AS studenteNome, 
-                    u.cognome AS studenteCognome
-                FROM QUESITO q
-                LEFT JOIN RISPOSTA_CHIUSA rc ON q.ID = rc.IDQuesito AND q.titoloTest = rc.titoloTest
-                LEFT JOIN RISPOSTA_CODICE rcod ON q.ID = rcod.IDQuesito AND q.titoloTest = rcod.titoloTest
-                INNER JOIN UTENTE u ON rc.emailStudente = u.email OR rcod.emailStudente = u.email
-                WHERE (rc.emailStudente = :emailStudente OR rcod.emailStudente = :emailStudente) 
-                AND q.titoloTest = :titoloTest
-                GROUP BY q.ID
-            ");
-            $stmt->bindParam(':emailStudente', $emailStudente, PDO::PARAM_STR);
-            $stmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
+            $stmt = $this->pdo->prepare("CALL dbESQL.visualizzaEsitoStudente(?,?,?, @esitoOut)");
+            $stmt->bindParam(1, $emailStudente, PDO::PARAM_STR);
+            $stmt->bindParam(2, $titoloTest, PDO::PARAM_STR);
+            $stmt->bindParam(3, $idQuesito, PDO::PARAM_INT);
             $stmt->execute();
-            $risposte = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+            // Recupera l'esito
+            $esitoStmt = $this->pdo->query("SELECT @esitoOut AS esitoOut");
+            $esitoResult = $esitoStmt->fetch(PDO::FETCH_ASSOC);
+            if ($esitoResult) {
+                $esitoOut = $esitoResult['esitoOut'];
+            }
         } catch (PDOException $e) {
-            echo "Errore nel recupero delle risposte dello studente: " . $e->getMessage();
+            echo "Errore nell'esecuzione della stored procedure: " . $e->getMessage();
         }
-        return $risposte;
+        return $esitoOut;
     }
+    
     
     
     
