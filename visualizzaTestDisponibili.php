@@ -5,7 +5,7 @@ require_once __DIR__ . '/root/connect.php';
 require_once __DIR__ . '/SvolgimentoTestLogica.php';
 
 // Assicurati che l'utente sia loggato e sia uno studente
-if (!isset($_SESSION['user']['email']) || getTipoUtente($_SESSION['user']['email']) != 'docente') {
+if (!isset($_SESSION['user']['email']) || getTipoUtente($_SESSION['user']['email']) == 'docente') {
     header('Location: login.php'); // Reindirizza al login se non autorizzato
     exit();
 }
