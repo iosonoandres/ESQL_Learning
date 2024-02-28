@@ -79,30 +79,35 @@ function inserisciRigaTabellaEsercizio($inputRiga, $nomeTabella)
 
     $emailDocente = getEmailDocente();
 
-
     try {
-        // Prepare the SQL statement to call the stored procedure
-        $stmt = $pdo->prepare("CALL InserisciRigaTabellaEsercizio(?, ?)");
+        // Check if the table has the correct emailDocente
+        $checkStmt = $pdo->prepare("SELECT 1 FROM TABELLA_DI_ESERCIZIO WHERE nome = ? AND emailDocente = ?");
+        $checkStmt->bindParam(1, $nomeTabella, PDO::PARAM_STR);
+        $checkStmt->bindParam(2, $emailDocente, PDO::PARAM_STR);
+        $checkStmt->execute();
 
-        // Bind parameters
-        $stmt->bindParam(1, $inputRiga, PDO::PARAM_STR);
-        $stmt->bindParam(2, $nomeTabella, PDO::PARAM_STR);
+        if ($checkStmt->fetchColumn() !== false) {
+            // The table has the correct emailDocente, proceed with the stored procedure
+            $stmt = $pdo->prepare("CALL InserisciRigaTabellaEsercizio(?, ?)");
+            $stmt->bindParam(1, $inputRiga, PDO::PARAM_STR);
+            $stmt->bindParam(2, $nomeTabella, PDO::PARAM_STR);
+            $stmt->execute();
+            $stmt->closeCursor();
 
-        // Execute the stored procedure
-        $stmt->execute();
-
-        // Close the statement
-        $stmt->closeCursor();
-
-        // Assuming the stored procedure doesn't return any specific result, handle success as needed
-        $logger->logEvent('LineInsertion', "Inserita Riga in $nomeTabella da $emailDocente");
-        return 'Riga inserita con successo!';
+            $logger->logEvent('LineInsertion', "Inserita Riga in $nomeTabella da $emailDocente");
+            return 'Riga inserita con successo!';
+        } else {
+            // The table doesn't have the correct emailDocente
+            $logger->logEvent('FailedLineInsertion', "Tentativo fallito inserimento Riga in $nomeTabella da $emailDocente");
+            return 'Non puoi inserire righe in tabelle create da altri Docenti!';
+        }
     } catch (PDOException $e) {
         // Handle exceptions here
         $logger->logEvent('FailedLineInsertion', "Tentativo fallito inserimento Riga in $nomeTabella da $emailDocente");
         return "Error: " . $e->getMessage();
     }
 }
+
 
 // Check if the form is submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
