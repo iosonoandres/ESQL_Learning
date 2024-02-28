@@ -546,12 +546,15 @@ BEGIN
     DECLARE attributo VARCHAR(255);
     DECLARE tipoAttributo VARCHAR(255);
     DECLARE prim BOOLEAN;
+    DECLARE chiaviPrimarie VARCHAR(255);
     DECLARE delim CHAR(1);
     DECLARE pos INT;
     DECLARE lunghezza INT;
     DECLARE attributoRiferimento1 VARCHAR(255);
     DECLARE attributoRiferimento2 VARCHAR(255);
     DECLARE TabellaRif2 VARCHAR(255);
+    
+    SET chiaviPrimarie:='';
     
     INSERT INTO TABELLA_DI_ESERCIZIO (nome, emailDocente, data, num_righe)
     VALUES (inputNomeTabella, inputEmailDocente, NOW(), 0);
@@ -579,23 +582,30 @@ BEGIN
         END IF;
         SET pos = LOCATE(delim, metaDati, pos) + 1;
         
-        -- Aggiungi l'attributo alla definizione della tabella
-        SET @sql = CONCAT(@sql, attributo, ' ', tipoAttributo);
-        IF prim THEN
-            SET @sql = CONCAT(@sql, ' PRIMARY KEY');
+        SET @sql = CONCAT(@sql, attributo, ' ', IF(tipoAttributo = 'TEXT' OR tipoAttributo = 'VARCHAR', 'VARCHAR(255)', tipoAttributo));
+		SET @sql = CONCAT(@sql, ', ');
+        
+        #ovvero se la chiave primaria è formata da piu di un attributo
+        IF prim and chiaviPrimarie!='' THEN
+			SET chiaviPrimarie = CONCAT(chiaviPrimarie, ', ', attributo);
+		ELSEIF prim and chiaviPrimarie='' THEN
+			SET chiaviPrimarie = attributo;
         END IF;
-        SET @sql = CONCAT(@sql, ', ');
  
         INSERT INTO ATTRIBUTO (nome, nomeTabella, tipo, primaria)
         VALUES (attributo, inputNomeTabella, tipoAttributo, prim);
         
         SET pos = pos + 1;
     END WHILE;
+    SET @sql = CONCAT(@sql,'PRIMARY KEY (', chiaviPrimarie, ' )');
+
+    
     
     -- Aggiungi i vincoli di integrità referenziale alla definizione della tabella
     SET delim = '#';
     SET pos = 1;
     SET lunghezza = LENGTH(integritaReferenziale);
+    select lunghezza;
     
     WHILE pos <= lunghezza DO
         SET attributoRiferimento1 = SUBSTRING(integritaReferenziale, pos, LOCATE(delim, integritaReferenziale, pos) - pos);
@@ -604,22 +614,28 @@ BEGIN
         SET attributoRiferimento2 = SUBSTRING(integritaReferenziale, pos, LOCATE(delim, integritaReferenziale, pos) - pos);
         SET pos = LOCATE(delim, integritaReferenziale, pos) + 1;
         
-        SET TabellaRif2 = SUBSTRING(integritaReferenziale, pos, LOCATE(delim, integritaReferenziale, pos) - pos);
+         SET TabellaRif2 = SUBSTRING(integritaReferenziale, pos, LOCATE(delim, integritaReferenziale, pos) - pos);
         SET pos = LOCATE(delim, integritaReferenziale, pos) + 1;
         
         -- Aggiungi il vincolo di integrità referenziale alla definizione della tabella
-        SET @sql = CONCAT(@sql, ' FOREIGN KEY (', attributoRiferimento1, ') REFERENCES ', TabellaRif2, '(', attributoRiferimento2, '), ');
+        SET @sql = CONCAT(@sql, ', FOREIGN KEY (', attributoRiferimento1, ') REFERENCES ', TabellaRif2, '(', attributoRiferimento2, '), ');
         
         INSERT INTO INTEGRITA_REFERENZIALE (Attributo1, Attributo2, Tabella1, Tabella2)
         VALUES (attributoRiferimento1, attributoRiferimento2, inputNomeTabella, TabellaRif2);
         
-        SET pos = pos + 1;
+        -- Avanzamento del puntatore
+        SET pos = LENGTH(integritaReferenziale) + 1;
+		
     END WHILE;
     
     -- Rimuovi l'ultima virgola e aggiungi la parentesi chiusa per completare la definizione della tabella
+    -- nel caso in cui sia entrato nel secondo while
+    IF 1<=lunghezza then
     SET @sql = LEFT(@sql, LENGTH(@sql) - 2);
-    SET @sql = CONCAT(@sql, ');');
+    END IF;
     
+    
+    SET @sql = CONCAT(@sql, ' );');
     -- Esegui la query per creare la tabella
     PREPARE stmt FROM @sql;
     EXECUTE stmt;
@@ -630,6 +646,7 @@ END;
 //
 
 DELIMITER ;
+
 
 
 
