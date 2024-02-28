@@ -15,7 +15,7 @@ class CreazioneQuesitoLogica
         $this->pdo = $pdo;
     }
 
-    function creaQuesitoChiuso($titoloTest, $nomeTabella, $difficolta, $descrizione, $testo, $opzioniCorrette)
+    function creaQuesitoChiuso($titoloTest, $nomeTabella, $difficolta, $descrizione, $testo, $opzioniCorrette, $emaildocente)
     {
         global $pdo;
 
@@ -26,8 +26,8 @@ class CreazioneQuesitoLogica
             // La stored procedure è stata aggiornata per accettare i nuovi parametri.
             // Nota: assicurati che i valori inviati alla stored procedure siano correttamente formati.
             // Ad esempio, $nomeTabella potrebbe essere una stringa del tipo "tavolo#cane", e $opzioniCorrette "1,2"
-            $stmt = $pdo->prepare("CALL dbESQL.creazioneQuesitoChiusoConRisposte(?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$titoloTest, $nomeTabella, $difficolta, $descrizione, $testo, $opzioniCorrette]);
+            $stmt = $pdo->prepare("CALL dbESQL.creazioneQuesitoChiusoConRisposte(?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$titoloTest, $nomeTabella, $difficolta, $descrizione, $testo, $opzioniCorrette, $emaildocente]);
 
             // Gestisci il successo dell'operazione, ad esempio salvando un messaggio in sessione o reindirizzando l'utente
             $_SESSION['message'] = 'Quesito chiuso creato con successo!';
@@ -48,7 +48,7 @@ class CreazioneQuesitoLogica
         }
     }
     
-    public function creaQuesitoCodice($titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione)
+    public function creaQuesitoCodice($titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione, $emaildocente)
     {
         // inizializza il logger
         $logger = new LoggerMongo("mongodb://localhost:27017", "logDB");
@@ -66,8 +66,8 @@ class CreazioneQuesitoLogica
             }
 
             // Altrimenti, procedi con la creazione del quesito di codice
-            $stmt = $this->pdo->prepare("CALL dbESQL.creazioneQuesitoCodiceConRisposte(?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione]);
+            $stmt = $this->pdo->prepare("CALL dbESQL.creazioneQuesitoCodiceConRisposte(?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione, $emaildocente]);
             $logger->logEvent('QuestionCreation', "Nuovo quesito di codice inserito su $titoloTest");
             return true;
         } catch (PDOException $e) {
@@ -97,6 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nomeTabella = $_POST['nomeTabella'];
     $difficolta = $_POST['difficolta'];
     $descrizione = $_POST['descrizione'];
+    $emailDocente = getEmailDocente();
 
     if (isset($_POST['creaQuesitoChiuso'])) {
         // Estrai gli altri parametri dal POST
@@ -105,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $opzioniNonCorrette = $_POST['opzioniNonCorrette']; // Nuovo campo aggiunto
 
         // Chiamata al metodo della classe, non alla funzione globale
-        $risultato = $creazioneQuesitoLogica->creaQuesitoChiuso($titoloTest, $nomeTabella, $difficolta, $descrizione, $testo, $opzioniCorrette, $opzioniNonCorrette);
+        $risultato = $creazioneQuesitoLogica->creaQuesitoChiuso($titoloTest, $nomeTabella, $difficolta, $descrizione, $testo, $opzioniCorrette, $emailDocente, $opzioniNonCorrette);
 
         // Gestisci il risultato dell'operazione...
         if ($risultato) {
@@ -116,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif (isset($_POST['creaQuesitoCodice'])) {
         $soluzione = $_POST['soluzione'];
         $nomeTabSoluzione = $_POST['nomeTabSoluzione'];
-        $successo = $creazioneQuesitoLogica->creaQuesitoCodice($titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione);
+        $successo = $creazioneQuesitoLogica->creaQuesitoCodice($titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione, $emailDocente);
 
         if ($successo) {
             $_SESSION['message'] = 'Quesito di codice creato con successo!';

@@ -19,7 +19,7 @@ class visualizzaTestEsitoLogica
             $stmt = $this->pdo->prepare("SELECT t.titolo, t.data 
                                          FROM TEST t
                                          LEFT JOIN SVOLGIMENTO s ON t.titolo = s.titoloTest AND s.emailStudente = :emailStudente
-                                         WHERE s.emailStudente IS NULL OR s.stato = 'Concluso'");
+                                         WHERE s.emailStudente IS NULL OR s.stato = 'Concluso' OR s.stato = 'InCompletamento' ");
             $stmt->bindParam(':emailStudente', $emailStudente, PDO::PARAM_STR);
             $stmt->execute();
             $testDisponibili = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -77,7 +77,7 @@ class visualizzaTestEsitoLogica
             $stmt = $this->pdo->prepare("SELECT t.titolo, t.data, s.stato 
                                          FROM TEST t
                                          JOIN SVOLGIMENTO s ON t.titolo = s.titoloTest
-                                         WHERE s.emailStudente = :emailStudente AND s.stato = 'Concluso'");
+                                         WHERE s.emailStudente = :emailStudente");
             $stmt->bindParam(':emailStudente', $emailStudente, PDO::PARAM_STR);
             $stmt->execute();
             $testSvolti = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -95,18 +95,50 @@ class visualizzaTestEsitoLogica
             $stmt->bindParam(2, $titoloTest, PDO::PARAM_STR);
             $stmt->bindParam(3, $idQuesito, PDO::PARAM_INT);
             $stmt->execute();
-    
+            echo($emailStudente);
+            echo($titoloTest);
+            echo($idQuesito);
+
+            
             // Recupera l'esito
             $esitoStmt = $this->pdo->query("SELECT @esitoOut AS esitoOut");
             $esitoResult = $esitoStmt->fetch(PDO::FETCH_ASSOC);
             if ($esitoResult) {
                 $esitoOut = $esitoResult['esitoOut'];
+                echo($esitoOut);
             }
         } catch (PDOException $e) {
             echo "Errore nell'esecuzione della stored procedure: " . $e->getMessage();
         }
         return $esitoOut;
     }
+
+
+    public function estraiRispostaCorretta($idQuesito, $titoloTest) {
+        $rispostaCorretta = null;
+        try {
+            // Prepara la chiamata alla procedura
+            $stmt = $this->pdo->prepare("CALL dbESQL.EstraiOpzioneOSketch(:idQuesitoInput, :titoloTestInput, @rispostaCorretta)");
+            
+            // Associa i parametri
+            $stmt->bindParam(':idQuesitoInput', $idQuesito, PDO::PARAM_INT);
+            $stmt->bindParam(':titoloTestInput', $titoloTest, PDO::PARAM_STR);
+            
+            // Esegue la procedura
+            $stmt->execute();
+            
+            // Recupera il risultato dell'output della procedura
+            $stmt = $this->pdo->query("SELECT @rispostaCorretta AS rispostaCorretta");
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($result) {
+                $rispostaCorretta = $result['rispostaCorretta'];
+            }
+        } catch (PDOException $e) {
+            echo "Errore nell'estrazione della risposta corretta: " . $e->getMessage();
+        }
+        return $rispostaCorretta;
+    }
+    
     
     
     

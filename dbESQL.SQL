@@ -522,6 +522,53 @@ DELIMITER ;
 
 DELIMITER //
 
+CREATE PROCEDURE dbESQL.EstraiOpzioneOSketch(
+    IN idQuesitoInput INT,
+    IN titoloTestInput VARCHAR(255),
+    OUT rispostaCorretta TEXT
+)
+BEGIN
+    DECLARE tipoQuesito VARCHAR(50);
+    DECLARE opzioneCorretta TEXT;
+    DECLARE sketch TEXT;
+    
+    -- Controlla se il quesito è di tipo chiuso o di codice
+    SELECT CASE 
+        WHEN EXISTS(SELECT 1 FROM dbESQL.QUESITO_A_RISPOSTA_CHIUSA WHERE ID = idQuesitoInput AND titoloTest = titoloTestInput) THEN 'Chiuso'
+        WHEN EXISTS(SELECT 1 FROM dbESQL.QUESITO_DI_CODICE WHERE ID = idQuesitoInput AND titoloTest = titoloTestInput) THEN 'Codice'
+        ELSE 'Non trovato'
+    END INTO tipoQuesito;
+    
+    -- Se il quesito è di tipo chiuso, estrai l'opzione corretta
+    IF tipoQuesito = 'Chiuso' THEN
+        SELECT op.opzioneCorretta INTO opzioneCorretta
+        FROM dbESQL.OPZIONE op
+        JOIN dbESQL.QUESITO_A_RISPOSTA_CHIUSA qr ON op.idQuesitoChiusa = qr.ID
+        WHERE qr.ID = idQuesitoInput AND qr.titoloTest = titoloTestInput
+        LIMIT 1;
+        
+        SET rispostaCorretta = opzioneCorretta;
+        
+    -- Se il quesito è di tipo codice, estrai lo sketch della soluzione
+    ELSEIF tipoQuesito = 'Codice' THEN
+        SELECT SOL.sketch INTO sketch
+        FROM dbESQL.SOLUZIONE SOL
+        JOIN dbESQL.QUESITO_DI_CODICE QC ON SOL.IdQuesitoCodice = QC.ID
+        WHERE QC.ID = idQuesitoInput AND QC.titoloTest = titoloTestInput;
+        
+        SET rispostaCorretta = sketch;
+    
+    ELSE
+        SET rispostaCorretta = 'Quesito non trovato';
+    END IF;
+END //
+
+DELIMITER ;
+
+
+
+DELIMITER //
+
 CREATE PROCEDURE dbESQL.InserisciTabellaDiEsercizio(
     IN inputNomeTabella VARCHAR(255),
     IN inputEmailDocente VARCHAR(255),
@@ -731,7 +778,6 @@ BEGIN
 END$$
 DELIMITER ;
 
-
 DELIMITER ££
 CREATE PROCEDURE dbESQL.creazioneQuesitoChiusoConRisposte(
     IN inputTitoloTest VARCHAR(255),
@@ -741,8 +787,9 @@ CREATE PROCEDURE dbESQL.creazioneQuesitoChiusoConRisposte(
     IN inputDescrizione TEXT,
     IN inputTesto TEXT, -- testo (possibile soluzione) per quesiti a risposta chiusa (campo di opzione), separati da #
     # es: soluzione = 4#soluzione = 3
-    IN inputOpzioniCorrette TEXT  -- Numerazione opzioni scelte dal docente come corrette per quesiti a risposta chiusa
+    IN inputOpzioniCorrette TEXT,  -- Numerazione opzioni scelte dal docente come corrette per quesiti a risposta chiusa
     # FORMA: 1,2,3... almeno posso inserirle direttamente nel campo di opzione
+    IN inputEmailDocente varchar(255)
     
 )
 BEGIN
@@ -751,8 +798,9 @@ BEGIN
     DECLARE risposta TEXT;
     DECLARE rispostaTesto TEXT;
     DECLARE nomiTabelle TEXT;
-	 DECLARE maxID INT;
-
+	DECLARE maxID INT;
+    DECLARE tabellaEsiste int;
+    
     -- Verifica se ci sono già quesiti per il test specificato
     SELECT COALESCE(MAX(ID), 0) INTO maxID
     FROM QUESITO
@@ -764,7 +812,24 @@ BEGIN
     SET quesitoID = IF(maxID = 0, 1, maxID + 1);
    
         IF inputTitoloTest IN (SELECT titolo FROM TEST) THEN
-       
+		
+        SET i = 1;
+        SET tabellaEsiste = 1; -- Assume che le tabelle siano state create dal docente finché non dimostrato il contrario
+        
+        WHILE i <= LENGTH(inputNomeTabella) - LENGTH(REPLACE(inputNomeTabella, '#', '')) + 1 DO
+            SET nomiTabelle = SUBSTRING_INDEX(SUBSTRING_INDEX(inputNomeTabella, '#', i), '#', -1);
+
+            -- Controlla se la tabella esiste nella tabella TABELLA_DI_ESERCIZIO e se è stata creata dal docente specifico
+            SELECT COUNT(*) INTO tabellaEsiste
+            FROM TABELLA_DI_ESERCIZIO
+            WHERE nome = nomiTabelle AND emailDocente = inputEmailDocente;
+
+            IF tabellaEsiste = 0 THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La tabella non è stata creata dal docente, impossibile accedere';
+            END IF;
+
+            SET i = i + 1;
+        END WHILE;
 
             INSERT INTO QUESITO (ID,titoloTest, numRisposte, difficoltà, descrizione) 
             VALUES (quesitoID,inputTitoloTest, 0, inputDifficoltà, inputDescrizione);
@@ -803,6 +868,8 @@ END ££
 DELIMITER ;
 
 
+
+
 #Creazione	di	un	nuovo	quesito	con	le	relative	risposte
 
 DELIMITER $$
@@ -816,8 +883,9 @@ CREATE PROCEDURE dbESQL.creazioneQuesitoCodiceConRisposte(
     
     IN inputSoluzione TEXT, -- query scelte dal docente come corretta separate da ,
     -- per i quesiti di codice es: select * from cane,select * from cane as C ;
-    IN inputNomeTabSoluzione VARCHAR(255) #nome che voglio attribuire alla tabella risultante a cui viene applicata la query
+    IN inputNomeTabSoluzione VARCHAR(255), #nome che voglio attribuire alla tabella risultante a cui viene applicata la query
     #ovvero tab di output 
+	IN inputEmailDocente varchar(255)
  
 )
 BEGIN
@@ -828,6 +896,7 @@ BEGIN
     DECLARE maxID INT;
     DECLARE query1 TEXT;
     DECLARE tableExists INT;
+    DECLARE tabellaEsiste int;
 
     -- Controllo se esiste già una tabella con lo stesso nome
     SELECT COUNT(*) INTO tableExists FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = inputNomeTabSoluzione;
@@ -846,6 +915,24 @@ BEGIN
     SET quesitoID = IF(maxID = 0, 1, maxID + 1);
 
         IF inputTitoloTest IN (SELECT titolo FROM TEST) THEN
+        
+        SET i = 1;
+        SET tabellaEsiste = 1; -- Assume che le tabelle siano state create dal docente finché non dimostrato il contrario
+        
+        WHILE i <= LENGTH(inputNomeTabella) - LENGTH(REPLACE(inputNomeTabella, '#', '')) + 1 DO
+            SET nomiTabelle = SUBSTRING_INDEX(SUBSTRING_INDEX(inputNomeTabella, '#', i), '#', -1);
+
+            -- Controlla se la tabella esiste nella tabella TABELLA_DI_ESERCIZIO e se è stata creata dal docente specifico
+            SELECT COUNT(*) INTO tabellaEsiste
+            FROM TABELLA_DI_ESERCIZIO
+            WHERE nome = nomiTabelle AND emailDocente = inputEmailDocente;
+
+            IF tabellaEsiste = 0 THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La tabella non è stata creata dal docente, impossibile accedere';
+            END IF;
+
+            SET i = i + 1;
+        END WHILE;
 
 
             INSERT INTO QUESITO (ID,titoloTest, numRisposte, difficoltà, descrizione) 
