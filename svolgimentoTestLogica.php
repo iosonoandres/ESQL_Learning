@@ -171,6 +171,33 @@ class SvolgimentoTestLogica
         }
     }
 
+    public function verificaSintassiRispostaCodice($queryText) {
+        $syntaxValid = false;
+        $errorMessage = '';
+        
+        try {
+            $this->pdo->beginTransaction();
+
+            $stmt = $this->pdo->prepare("CALL dbESQL.CheckSyntax(:queryText, @syntaxValid, @errorMessageOut)");
+            $stmt->bindParam(':queryText', $queryText, PDO::PARAM_STR);
+            $stmt->execute();
+            $stmt = null; // Chiudi lo statement corrente
+
+            $stmt = $this->pdo->query("SELECT @syntaxValid, @errorMessageOut");
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $this->pdo->commit(); // Commit transaction
+
+            $syntaxValid = $result['@syntaxValid'];
+            $errorMessage = $result['@errorMessageOut'];
+
+            return ['syntaxValid' => $syntaxValid, 'errorMessage' => $errorMessage];
+        } catch (PDOException $e) {
+            $this->pdo->rollBack();
+            throw $e; // Rilancia l'eccezione per gestirla esternamente
+        }
+    }
+
 
 
 

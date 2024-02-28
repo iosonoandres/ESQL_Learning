@@ -19,11 +19,24 @@ $risposta = $_POST['risposta'][$idQuesito];
 
 // Processa la risposta data dall'utente
 if (is_numeric($risposta)) {
-    // Assumiamo che sia una risposta chiusa
     $result = $svolgimentoTestLogica->inserisciRispostaChiusaStudente($emailStudente, $titoloTest, $idQuesito, $risposta);
 } else {
-    // Assumiamo che sia una risposta di codice
-    $result = $svolgimentoTestLogica->inserisciRispostaCodiceStudente($emailStudente, $titoloTest, $idQuesito, $risposta);
+    try {
+        $verifica = $svolgimentoTestLogica->verificaSintassiRispostaCodice($risposta);
+    
+        if (!$verifica['syntaxValid']) {
+            // Usa JavaScript per mostrare un alert e poi reindirizza l'utente
+            $errorMessage = addslashes($verifica['errorMessage']); // Previene problemi con apici nel messaggio
+            echo "<script>alert('Errore di sintassi nella risposta: $errorMessage'); window.history.back();</script>";
+            exit;
+        } else {
+            $result = $svolgimentoTestLogica->inserisciRispostaCodiceStudente($emailStudente, $titoloTest, $idQuesito, $risposta);
+        }
+    } catch (PDOException $e) {
+        $errorMessage = addslashes($e->getMessage()); // Previene problemi con apici nel messaggio
+        echo "<script>alert('Si è verificato un errore nella verifica della sintassi: $errorMessage'); window.history.back();</script>";
+        exit;
+    }
 }
 
 if (!$result) {
