@@ -47,8 +47,7 @@ class CreazioneQuesitoLogica
             // exit();
         }
     }
-
-
+    
     public function creaQuesitoCodice($titoloTest, $nomeTabella, $difficolta, $descrizione, $soluzione, $nomeTabSoluzione)
     {
         // inizializza il logger

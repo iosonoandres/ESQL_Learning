@@ -52,32 +52,6 @@ function getSelectTest($emailDocente)
     }
 }
 
-
-// Funzione che recupera le tabelle disponibili per il menu a tendina filtrate per emailDocente
-function getSelectTables($emailDocente)
-{
-    global $pdo;
-    try {
-        // Query per recuperare tutte le tabelle il cui nome è presente in TABELLA_DI_ESERCIZIO per l'emailDocente specificato
-        $stmt = $pdo->prepare("SELECT DISTINCT e.nome AS table_name
-                                FROM TABELLA_DI_ESERCIZIO e
-                                WHERE e.emailDocente = :emailDocente");
-        $stmt->bindParam(':emailDocente', $emailDocente, PDO::PARAM_STR);
-        $stmt->execute();
-        $tables = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $selectHtml = '<select class="form-control" name="nomeTabella" id="nomeTabella" required>';
-        foreach ($tables as $table) {
-            $selectHtml .= '<option value="' . htmlspecialchars($table['table_name']) . '">' . htmlspecialchars($table['table_name']) . '</option>';
-        }
-        $selectHtml .= '</select>';
-        return $selectHtml;
-    } catch (PDOException $e) {
-        error_log('Errore durante il recupero delle tabelle: ' . $e->getMessage());
-        return '<select class="form-control" name="nomeTabella" id="nomeTabella" required><option value="">Errore nel caricamento delle tabelle</option></select>';
-    }
-}
-
 ?>
 
 <!DOCTYPE html>
@@ -159,7 +133,7 @@ function getSelectTables($emailDocente)
 
                 <div class="form-group">
                     <label for="nomeTabella">Nome Tabella (separato da # per più tabelle):</label>
-                    <?php echo getSelectTables($emailDocente); ?>
+                    <textarea class="form-control" name="nomeTabella" id="nomeTabella" required></textarea>
                 </div>
 
 
@@ -210,7 +184,7 @@ function getSelectTables($emailDocente)
 
                 <div class="form-group">
                     <label for="nomeTabella">Nome Tabella (separato da # per più tabelle):</label>
-                    <?php echo getSelectTables($emailDocente); ?>
+                    <textarea class="form-control" name="nomeTabella" id="nomeTabella" required></textarea>
                 </div>
 
 
