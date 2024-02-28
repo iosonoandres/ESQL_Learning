@@ -20,14 +20,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     require 'creazioneQuesitoLogica.php';
 }
 
-// funzione che recupera i test disponibili per il menu a tendina 
-function getSelectTest()
+function getEmailDocente()
+{
+    // Assuming the session contains the user's email
+    return isset($_SESSION['user']['email']) ? $_SESSION['user']['email'] : '';
+}
+
+// pesca dell'emailDocente 
+$emailDocente = getEmailDocente();
+
+// Funzione che recupera i test disponibili per il menu a tendina filtrati per emailDocente
+function getSelectTest($emailDocente)
 {
     global $pdo;
     try {
-        // Query per recuperare tutti i test disponibili
-        // Modifica questa query in base ai criteri desiderati
-        $stmt = $pdo->prepare("SELECT titolo FROM TEST");
+        // Query per recuperare i test disponibili per l'emailDocente specificato
+        $stmt = $pdo->prepare("SELECT titolo FROM TEST WHERE emailDocente = :emailDocente");
+        $stmt->bindParam(':emailDocente', $emailDocente, PDO::PARAM_STR);
         $stmt->execute();
         $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -43,16 +52,17 @@ function getSelectTest()
     }
 }
 
-// funzione che recupera le tabelle disponibili per il menu a tendina
-function getSelectTables()
+
+// Funzione che recupera le tabelle disponibili per il menu a tendina filtrate per emailDocente
+function getSelectTables($emailDocente)
 {
     global $pdo;
     try {
-        // Query per recuperare tutte le tabelle il cui nome è presente in TABELLA_DI_ESERCIZIO
-        $stmt = $pdo->prepare("SELECT DISTINCT t.table_name 
-                                FROM information_schema.tables t
-                                INNER JOIN dbESQL.TABELLA_DI_ESERCIZIO e ON t.table_name = e.nome
-                                WHERE t.table_schema = DATABASE()");
+        // Query per recuperare tutte le tabelle il cui nome è presente in TABELLA_DI_ESERCIZIO per l'emailDocente specificato
+        $stmt = $pdo->prepare("SELECT DISTINCT e.nome AS table_name
+                                FROM TABELLA_DI_ESERCIZIO e
+                                WHERE e.emailDocente = :emailDocente");
+        $stmt->bindParam(':emailDocente', $emailDocente, PDO::PARAM_STR);
         $stmt->execute();
         $tables = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -144,12 +154,12 @@ function getSelectTables()
 
                 <div class="form-group">
                     <label for="titoloTest">Test associato:</label>
-                    <?php echo getSelectTest(); ?>
+                    <?php echo getSelectTest($emailDocente); ?>
                 </div>
 
                 <div class="form-group">
                     <label for="nomeTabella">Nome Tabella (separato da # per più tabelle):</label>
-                    <?php echo getSelectTables(); ?>
+                    <?php echo getSelectTables($emailDocente); ?>
                 </div>
 
 
@@ -195,12 +205,12 @@ function getSelectTables()
 
                 <div class="form-group">
                     <label for="titoloTestCodice">Test associato:</label>
-                    <?php echo getSelectTest(); ?>
+                    <?php echo getSelectTest($emailDocente); ?>
                 </div>
 
                 <div class="form-group">
                     <label for="nomeTabella">Nome Tabella (separato da # per più tabelle):</label>
-                    <?php echo getSelectTables(); ?>
+                    <?php echo getSelectTables($emailDocente); ?>
                 </div>
 
 

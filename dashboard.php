@@ -26,7 +26,7 @@ $features = [
     ["Inserimento Test", "testDesign.php", $isDocente],
     ["Forum Test Vari", "testCommentiDesign.php", true],
     ["Inserimento Messaggio", "inserimentoMessaggioDesign.php", true],
-    ["Inserimento Tabella", "inserimentoTabellaDesign.php", $isDocente],
+    ["Inserimento Tabella, Aggiunta Riga", "inserimentoTabellaDesign.php", $isDocente],
     ["Svolgimento test", "visualizzaTestDisponibili.php", $isStudente],
     ["Domande Test/Esito","visualizzaTestEsito.php",$isStudente],
     ["Visualizza Test (Per Docenti)", "visualizzaTestDisponibili2.php", $isDocente],
