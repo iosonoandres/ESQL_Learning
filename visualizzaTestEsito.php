@@ -75,39 +75,27 @@ $testSvolti = $visualizzaTestEsitoLogica->getTestSvolti($emailStudente);
 
     <div class="container">
 
-       
+
 
         <h1 class="text-center">Test Svolti - <?= htmlspecialchars($infoStudente['nome']) . " " . htmlspecialchars($infoStudente['cognome']) ?></h1>
-        
+
         <?php foreach ($testSvolti as $test) : ?>
-            
             <div class="test-item">
                 <div class="test-title"><?= htmlspecialchars($test['titolo']) ?></div>
                 <div class="test-date">Data: <?= htmlspecialchars($test['data']) ?></div>
                 <?php
-
                 $risposte = $visualizzaTestEsitoLogica->getRisposteStudente($emailStudente, $test['titolo']);
                 foreach ($risposte as $risposta) {
-                    $esito = $visualizzaTestEsitoLogica->getEsitoRisposta($emailStudente, $test['titolo'], $risposta['ID']);
+                    $result = $visualizzaTestEsitoLogica->getEsitoRisposta($risposta['ID'], $test['titolo'], $emailStudente);
+                    $esito = $result['esito'];
+                    $rispostaCorretta = $result['rispostaCorretta'];
                     $classeRisposta = $esito ? "risposta-corretta" : "risposta-errata";
                     echo "<div class='{$classeRisposta}'>" . htmlspecialchars($risposta['descrizione']) . "<br>Esito: " . ($esito ? "Corretta" : "Errata");
-            
-
-                    // Tenta di recuperare la risposta corretta
-                    try {
-                        $rispostaCorretta = $visualizzaTestEsitoLogica->estraiRispostaCorretta($risposta['ID'], $test['titolo']);
-                        if ($rispostaCorretta !== null) {
-                            // Mostra la risposta corretta se disponibile
-                            echo "<br>Risposta Corretta: " . htmlspecialchars($rispostaCorretta);
-                        } else {
-                            // Opzionale: mostrare un messaggio se la risposta corretta non è disponibile
-                            echo "<br>Risposta Corretta: Non disponibile";
-                        }
-                    } catch (Exception $e) {
-                        // Gestisci l'errore o mostra un messaggio di default se la risposta corretta non può essere recuperata
-                        echo "<br>Risposta Corretta: Errore nel recupero";
+                    // Mostra la risposta corretta solo se disponibile e il docente ha abilitato la visualizzazione
+                    if (!is_null($rispostaCorretta) && $rispostaCorretta !== '') {
+                        echo "<br>Risposta Corretta: " . htmlspecialchars($rispostaCorretta);
                     }
-                    echo "</div>"; // Chiusura del div della risposta
+                    echo "</div>";
                 }
                 ?>
             </div>

@@ -29,7 +29,8 @@ class visualizzaTestEsitoLogica
         return $testDisponibili;
     }
 
-    public function getRisposteStudente($emailStudente, $titoloTest) {
+    public function getRisposteStudente($emailStudente, $titoloTest)
+    {
         $risposte = [];
         try {
             // Ottenere l'elenco dei quesiti per il test specificato
@@ -37,7 +38,7 @@ class visualizzaTestEsitoLogica
             $quesitiStmt->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
             $quesitiStmt->execute();
             $quesiti = $quesitiStmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
             // Per ogni quesito, ottenere l'esito tramite la stored procedure e includere la descrizione
             foreach ($quesiti as $quesito) {
                 $esito = $this->getEsitoRisposta($emailStudente, $titoloTest, $quesito['ID']);
@@ -54,11 +55,12 @@ class visualizzaTestEsitoLogica
         }
         return $risposte;
     }
-    
-    
+
+
 
     // Metodo per recuperare il nome e il cognome dello studente
-    public function getNomeCognomeStudente($emailStudente) {
+    public function getNomeCognomeStudente($emailStudente)
+    {
         try {
             $stmt = $this->pdo->prepare("SELECT nome, cognome FROM UTENTE WHERE email = :email");
             $stmt->bindParam(':email', $emailStudente, PDO::PARAM_STR);
@@ -71,13 +73,14 @@ class visualizzaTestEsitoLogica
     }
 
     // Nuovo metodo per recuperare i test svolti dall'utente
-    public function getTestSvolti($emailStudente) {
+    public function getTestSvolti($emailStudente)
+    {
         $testSvolti = [];
         try {
             $stmt = $this->pdo->prepare("SELECT t.titolo, t.data, s.stato 
                                          FROM TEST t
                                          JOIN SVOLGIMENTO s ON t.titolo = s.titoloTest
-                                         WHERE s.emailStudente = :emailStudente");
+                                         WHERE s.emailStudente = :emailStudente AND s.stato != 'Aperto'");
             $stmt->bindParam(':emailStudente', $emailStudente, PDO::PARAM_STR);
             $stmt->execute();
             $testSvolti = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -87,66 +90,56 @@ class visualizzaTestEsitoLogica
         return $testSvolti;
     }
 
-    public function getEsitoRisposta($emailStudente, $titoloTest, $idQuesito) {
+    public function getEsitoRisposta($idQuesito, $titoloTest, $emailStudente)
+    {
         $esitoOut = null;
+        $rispostaCorretta = null; // Questa sarà utilizzata solo se il docente ha abilitato la visualizzazione
+        
         try {
-            $stmt = $this->pdo->prepare("CALL dbESQL.visualizzaEsitoStudente(?,?,?, @esitoOut)");
-            $stmt->bindParam(1, $emailStudente, PDO::PARAM_STR);
+            // Chiamata alla stored procedure per ottenere l'esito e la risposta corretta
+            $stmt = $this->pdo->prepare("CALL dbESQL.EstraiOpzioneOSketch(?,?,?, @rispostaCorretta, @esitoOut)");
+            $stmt->bindParam(1, $idQuesito, PDO::PARAM_INT);
             $stmt->bindParam(2, $titoloTest, PDO::PARAM_STR);
-            $stmt->bindParam(3, $idQuesito, PDO::PARAM_INT);
+            $stmt->bindParam(3, $emailStudente, PDO::PARAM_STR);
+    
             $stmt->execute();
-            echo($emailStudente);
-            echo($titoloTest);
-            echo($idQuesito);
-
             
-            // Recupera l'esito
+            // Recupera l'esito dalla variabile di output della stored procedure
             $esitoStmt = $this->pdo->query("SELECT @esitoOut AS esitoOut");
             $esitoResult = $esitoStmt->fetch(PDO::FETCH_ASSOC);
-            if ($esitoResult) {
-                $esitoOut = $esitoResult['esitoOut'];
-                echo($esitoOut);
+            $esitoOut = $esitoResult['esitoOut'];
+    
+            // Verifica se il docente ha abilitato la visualizzazione delle risposte
+            $stmtVisualizzaRisposte = $this->pdo->prepare("SELECT visualizzaRisposte FROM TEST WHERE titolo = :titoloTest");
+            $stmtVisualizzaRisposte->bindParam(':titoloTest', $titoloTest, PDO::PARAM_STR);
+            $stmtVisualizzaRisposte->execute();
+            $visualizzaRisposte = $stmtVisualizzaRisposte->fetchColumn();
+            
+            if ($visualizzaRisposte == 1) {
+                // Se il docente ha abilitato la visualizzazione, recupera la risposta corretta
+                $rispostaCorrettaStmt = $this->pdo->query("SELECT @rispostaCorretta AS rispostaCorretta");
+                $rispostaCorrettaResult = $rispostaCorrettaStmt->fetch(PDO::FETCH_ASSOC);
+                if ($rispostaCorrettaResult) {
+                    $rispostaCorretta = $rispostaCorrettaResult['rispostaCorretta'];
+                }
             }
         } catch (PDOException $e) {
             echo "Errore nell'esecuzione della stored procedure: " . $e->getMessage();
         }
-        return $esitoOut;
-    }
-
-
-    public function estraiRispostaCorretta($idQuesito, $titoloTest) {
-        $rispostaCorretta = null;
-        try {
-            // Prepara la chiamata alla procedura
-            $stmt = $this->pdo->prepare("CALL dbESQL.EstraiOpzioneOSketch(:idQuesitoInput, :titoloTestInput, @rispostaCorretta)");
-            
-            // Associa i parametri
-            $stmt->bindParam(':idQuesitoInput', $idQuesito, PDO::PARAM_INT);
-            $stmt->bindParam(':titoloTestInput', $titoloTest, PDO::PARAM_STR);
-            
-            // Esegue la procedura
-            $stmt->execute();
-            
-            // Recupera il risultato dell'output della procedura
-            $stmt = $this->pdo->query("SELECT @rispostaCorretta AS rispostaCorretta");
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($result) {
-                $rispostaCorretta = $result['rispostaCorretta'];
-            }
-        } catch (PDOException $e) {
-            echo "Errore nell'estrazione della risposta corretta: " . $e->getMessage();
-        }
-        return $rispostaCorretta;
+    
+        // Restituisce l'esito e la risposta corretta (quest'ultima solo se abilitata la visualizzazione)
+        return ['esito' => $esitoOut, 'rispostaCorretta' => $rispostaCorretta];
     }
     
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
 
 
 
