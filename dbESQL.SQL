@@ -525,6 +525,7 @@ DELIMITER //
 CREATE PROCEDURE dbESQL.EstraiOpzioneOSketch(
     IN idQuesitoInput INT,
     IN titoloTestInput VARCHAR(255),
+    IN inputEmailStudente VARCHAR(255),
     OUT rispostaCorretta TEXT,
     OUT esitoOUT varchar(255)
 )
@@ -533,6 +534,7 @@ BEGIN
     DECLARE opzioneCorretta TEXT;
     DECLARE sketch TEXT;
     DECLARE esitoRISP TEXT;
+    DECLARE maxData datetime;
     
     -- Controlla se il quesito è di tipo chiuso o di codice
     SELECT CASE 
@@ -543,6 +545,7 @@ BEGIN
     
     -- Se il quesito è di tipo chiuso, estrai l'opzione corretta
     IF tipoQuesito = 'Chiuso' THEN
+        
         SELECT op.opzioneCorretta INTO opzioneCorretta
         FROM dbESQL.OPZIONE op
         JOIN dbESQL.QUESITO_A_RISPOSTA_CHIUSA qr ON op.idQuesitoChiusa = qr.ID
@@ -551,11 +554,15 @@ BEGIN
         
         SET rispostaCorretta = opzioneCorretta;
         
+        SELECT MAX(RISPOSTA_CHIUSA.data) into maxData
+		FROM dbESQL.RISPOSTA_CHIUSA
+		WHERE IDQuesito = idQuesitoInput AND titoloTest = titoloTestInput;
+        
         SELECT esito INTO esitoRISP
         FROM RISPOSTA
-        JOIN dbESQL.RISPOSTA_CHIUSA qr ON RISPOSTA_CHIUSA.emailStudente=RISPOSTA.emailStudente and RISPOSTA_CHIUSA.data=RISPOSTA.data
-        WHERE qr.ID = idQuesitoInput AND qr.titoloTest = titoloTestInput and data=max(data);
-                
+        JOIN dbESQL.RISPOSTA_CHIUSA ON RISPOSTA_CHIUSA.emailStudente=RISPOSTA.emailStudente and RISPOSTA_CHIUSA.data=RISPOSTA.data
+        WHERE IDQuesito = idQuesitoInput AND titoloTest = titoloTestInput and RISPOSTA_CHIUSA.data=maxData and RISPOSTA_CHIUSA.emailStudente=inputEmailStudente;
+        
         SET esitoOUT = esitoRISP;
         
     -- Se il quesito è di tipo codice, estrai lo sketch della soluzione
@@ -567,10 +574,15 @@ BEGIN
         
         SET rispostaCorretta = sketch;
         
+        
+        SELECT MAX(RISPOSTA_CODICE.data) into maxData
+		FROM dbESQL.RISPOSTA_CODICE
+		WHERE IDQuesito = idQuesitoInput AND titoloTest = titoloTestInput;
+        
         SELECT esito INTO esitoRISP
         FROM RISPOSTA
-        JOIN dbESQL.RISPOSTA_CODICE qr ON RISPOSTA_CODICE.emailStudente=RISPOSTA.emailStudente and RISPOSTA_CODICE.data=RISPOSTA.data
-        WHERE qr.ID = idQuesitoInput AND qr.titoloTest = titoloTestInput and data=max(data);
+        JOIN dbESQL.RISPOSTA_CODICE ON RISPOSTA_CODICE.emailStudente=RISPOSTA.emailStudente and RISPOSTA_CODICE.data=RISPOSTA.data
+        WHERE IDQuesito = idQuesitoInput AND titoloTest = titoloTestInput and RISPOSTA_CODICE.data=maxData and RISPOSTA_CODICE.emailStudente=inputEmailStudente;
                 
         SET esitoOUT = esitoRISP;
     
@@ -1077,8 +1089,7 @@ CREATE PROCEDURE dbESQL.InserisciRispostaChiusaStudente(
     IN inputEmailStudente VARCHAR(255),
     IN inputTitoloTest VARCHAR(255),
     IN inputIDQuesito INT,
-    IN opzioneScelta INT,-- Utilizzato solo se il quesito è di tipo 'CHIUSA', rappresenta il numero dell'opzione inserita da utente
-	OUT esitoOUT BOOLEAN
+    IN opzioneScelta INT-- Utilizzato solo se il quesito è di tipo 'CHIUSA', rappresenta il numero dell'opzione inserita da utente
 )
 BEGIN
 
@@ -1130,7 +1141,6 @@ BEGIN
 				SET QUESITO.NumRisposte = QUESITO.NumRisposte + 1
 				WHERE QUESITO.ID = inputIDQuesito and titoloTest = inputTitoloTest;
 
-               SET esitoOUT = esitoRISP;
              
         ELSE
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Il test o il quesito specificato non esiste/ il test è concluso';
@@ -1148,8 +1158,7 @@ CREATE PROCEDURE dbESQL.InserisciRispostaCodiceStudente(
     IN inputEmailStudente VARCHAR(255),
     IN inputTitoloTest VARCHAR(255),
     IN inputIDQuesito INT,
-    IN inputTestoRisposta TEXT,-- Utilizzato solo se il quesito è di tipo 'CODICE', rappresenta la query proposta
-	OUT esitoOUT boolean
+    IN inputTestoRisposta TEXT-- Utilizzato solo se il quesito è di tipo 'CODICE', rappresenta la query proposta
 )
 BEGIN
 	
@@ -1243,8 +1252,7 @@ BEGIN
 				UPDATE RISPOSTA
 				SET esito = esitoRISP
 				WHERE emailStudente = inputEmailStudente AND data = rispostaData;
-                
-                SET esitoOUT = esitoRISP;
+       
 
 				INSERT INTO RISPOSTA_CODICE (data, IDQuesito, titoloTest, emailStudente, testoRisposta)
 				VALUES (rispostaData, inputIDQuesito, inputTitoloTest, inputEmailStudente, inputTestoRisposta);
@@ -1405,8 +1413,8 @@ ORDER BY PercentualeRisposteCorrette DESC;
 CREATE VIEW dbESQL.ClassificaQuesiti AS
 SELECT q.ID AS IDQuesito, q.titoloTest AS TitoloTest, COUNT(rc.data) + COUNT(ra.data) AS NumeroRisposte
 FROM dbESQL.QUESITO q
-LEFT JOIN dbESQL.RISPOSTA_CHIUSA rc ON q.ID = rc.IDQuesito
-LEFT JOIN dbESQL.RISPOSTA_CODICE ra ON q.ID = ra.IDQuesito
+LEFT JOIN dbESQL.RISPOSTA_CHIUSA rc ON q.ID = rc.IDQuesito and q.titoloTest=rc.titoloTest
+LEFT JOIN dbESQL.RISPOSTA_CODICE ra ON q.ID = ra.IDQuesito and q.titoloTest=ra.titoloTest
 GROUP BY q.ID, q.titoloTest
 ORDER BY NumeroRisposte DESC;
 
