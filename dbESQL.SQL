@@ -525,12 +525,14 @@ DELIMITER //
 CREATE PROCEDURE dbESQL.EstraiOpzioneOSketch(
     IN idQuesitoInput INT,
     IN titoloTestInput VARCHAR(255),
-    OUT rispostaCorretta TEXT
+    OUT rispostaCorretta TEXT,
+    OUT esitoOUT varchar(255)
 )
 BEGIN
     DECLARE tipoQuesito VARCHAR(50);
     DECLARE opzioneCorretta TEXT;
     DECLARE sketch TEXT;
+    DECLARE esitoRISP TEXT;
     
     -- Controlla se il quesito è di tipo chiuso o di codice
     SELECT CASE 
@@ -549,6 +551,13 @@ BEGIN
         
         SET rispostaCorretta = opzioneCorretta;
         
+        SELECT esito INTO esitoRISP
+        FROM RISPOSTA
+        JOIN dbESQL.RISPOSTA_CHIUSA qr ON RISPOSTA_CHIUSA.emailStudente=RISPOSTA.emailStudente and RISPOSTA_CHIUSA.data=RISPOSTA.data
+        WHERE qr.ID = idQuesitoInput AND qr.titoloTest = titoloTestInput and data=max(data);
+                
+        SET esitoOUT = esitoRISP;
+        
     -- Se il quesito è di tipo codice, estrai lo sketch della soluzione
     ELSEIF tipoQuesito = 'Codice' THEN
         SELECT SOL.sketch INTO sketch
@@ -557,6 +566,13 @@ BEGIN
         WHERE QC.ID = idQuesitoInput AND QC.titoloTest = titoloTestInput;
         
         SET rispostaCorretta = sketch;
+        
+        SELECT esito INTO esitoRISP
+        FROM RISPOSTA
+        JOIN dbESQL.RISPOSTA_CODICE qr ON RISPOSTA_CODICE.emailStudente=RISPOSTA.emailStudente and RISPOSTA_CODICE.data=RISPOSTA.data
+        WHERE qr.ID = idQuesitoInput AND qr.titoloTest = titoloTestInput and data=max(data);
+                
+        SET esitoOUT = esitoRISP;
     
     ELSE
         SET rispostaCorretta = 'Quesito non trovato';
@@ -1061,7 +1077,8 @@ CREATE PROCEDURE dbESQL.InserisciRispostaChiusaStudente(
     IN inputEmailStudente VARCHAR(255),
     IN inputTitoloTest VARCHAR(255),
     IN inputIDQuesito INT,
-    IN opzioneScelta INT-- Utilizzato solo se il quesito è di tipo 'CHIUSA', rappresenta il numero dell'opzione inserita da utente
+    IN opzioneScelta INT,-- Utilizzato solo se il quesito è di tipo 'CHIUSA', rappresenta il numero dell'opzione inserita da utente
+	OUT esitoOUT BOOLEAN
 )
 BEGIN
 
@@ -1103,7 +1120,7 @@ BEGIN
 				
 				INSERT INTO RISPOSTA (data, emailStudente, esito)
 				VALUES (NOW(), inputEmailStudente, esitoRISP);
-                
+         
 
                 INSERT INTO RISPOSTA_CHIUSA (data, IDQuesito, titoloTest, emailStudente, numerazioneOpzione)
                 VALUES (NOW(), inputIDQuesito, inputTitoloTest, inputEmailStudente, opzioneScelta);
@@ -1113,7 +1130,7 @@ BEGIN
 				SET QUESITO.NumRisposte = QUESITO.NumRisposte + 1
 				WHERE QUESITO.ID = inputIDQuesito and titoloTest = inputTitoloTest;
 
-               
+               SET esitoOUT = esitoRISP;
              
         ELSE
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Il test o il quesito specificato non esiste/ il test è concluso';
@@ -1131,7 +1148,8 @@ CREATE PROCEDURE dbESQL.InserisciRispostaCodiceStudente(
     IN inputEmailStudente VARCHAR(255),
     IN inputTitoloTest VARCHAR(255),
     IN inputIDQuesito INT,
-    IN inputTestoRisposta TEXT-- Utilizzato solo se il quesito è di tipo 'CODICE', rappresenta la query proposta
+    IN inputTestoRisposta TEXT,-- Utilizzato solo se il quesito è di tipo 'CODICE', rappresenta la query proposta
+	OUT esitoOUT boolean
 )
 BEGIN
 	
@@ -1226,6 +1244,7 @@ BEGIN
 				SET esito = esitoRISP
 				WHERE emailStudente = inputEmailStudente AND data = rispostaData;
                 
+                SET esitoOUT = esitoRISP;
 
 				INSERT INTO RISPOSTA_CODICE (data, IDQuesito, titoloTest, emailStudente, testoRisposta)
 				VALUES (rispostaData, inputIDQuesito, inputTitoloTest, inputEmailStudente, inputTestoRisposta);
@@ -1287,8 +1306,6 @@ END$$
 DELIMITER ;
 
 
-
-
 DELIMITER $$
 CREATE PROCEDURE dbESQL.contaColonneTabella(
     IN nomeTabella VARCHAR(255),
@@ -1335,40 +1352,6 @@ BEGIN
 END$$
 
 DELIMITER ;
-
-
-
-DELIMITER //
-
-CREATE PROCEDURE dbESQL.visualizzaEsitoStudente (
-    IN inputEmailStudente VARCHAR(255),
-    IN inputTitoloTest VARCHAR(255),
-    IN inputIdQuesito INT,
-    OUT esitoOut BOOLEAN
-)
-BEGIN
-    DECLARE ultimaRisposta DATETIME;
-
-    -- Trova la data dell'ultima risposta per il quesito specificato
-    SELECT MAX(data) INTO ultimaRisposta
-    FROM RISPOSTA
-    WHERE emailStudente = inputEmailStudente
-    AND EXISTS (
-        SELECT 1
-        FROM QUESITO
-        WHERE ID = inputIdQuesito
-        AND titoloTest = inputTitoloTest
-    );
-
-    -- Ottiene l'esito dell'ultima risposta
-    SELECT esito INTO esitoOut
-    FROM RISPOSTA
-    WHERE emailStudente = inputEmailStudente
-    AND data = ultimaRisposta;
-END//
-
-DELIMITER ;
-
 
 
 
