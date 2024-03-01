@@ -50,7 +50,8 @@ if (!$result) {
         exit;
     } else {
         // Tutte le domande sono state risposte, reindirizza l'utente a una pagina di fine test o visualizza un messaggio di completamento
-        echo "Hai completato il test!";
+        echo '<script>alert("Hai completato il test! Verrai reinderizzato alla dashboard"); window.location.href = "dashboard.php";</script>';
+
         // Qui puoi reindirizzare l'utente a una pagina di riepilogo o di ringraziamento
         // header("Location: paginaDiFineTest.php");
         exit;
