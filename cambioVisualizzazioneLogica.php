@@ -44,8 +44,9 @@ function gestisciCambioVisualizzazione($pdo)
         $stmt->closeCursor();
 
         // Output o redirect a seconda della necessità
-        echo "Operazione completata con successo!";
         $logger->logEvent('ChangeTestView', "Visualizzazione test $titoloTest settato a " . ($abilitaVisualizzazione == 1 ? 'true' : 'false'));
+        echo '<script>alert("Hai cambiato correttamente lo stato del test! Verrai reinderizzato alla dashboard"); window.location.href = "dashboard.php";</script>';
+
     } catch (PDOException $e) {
         error_log('Errore nella modifica della visualizzazione: ' . $e->getMessage());
         echo "Errore nella modifica della visualizzazione. Consulta i log per ulteriori dettagli.";
