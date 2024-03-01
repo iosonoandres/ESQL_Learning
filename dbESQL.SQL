@@ -556,7 +556,7 @@ BEGIN
         
         SELECT MAX(RISPOSTA_CHIUSA.data) into maxData
 		FROM dbESQL.RISPOSTA_CHIUSA
-		WHERE IDQuesito = idQuesitoInput AND titoloTest = titoloTestInput;
+		WHERE IDQuesito = idQuesitoInput AND titoloTest = titoloTestInput and emailStudente=inputEmailStudente;
         
         SELECT esito INTO esitoRISP
         FROM RISPOSTA
@@ -577,7 +577,7 @@ BEGIN
         
         SELECT MAX(RISPOSTA_CODICE.data) into maxData
 		FROM dbESQL.RISPOSTA_CODICE
-		WHERE IDQuesito = idQuesitoInput AND titoloTest = titoloTestInput;
+		WHERE IDQuesito = idQuesitoInput AND titoloTest = titoloTestInput and emailStudente=inputEmailStudente;
         
         SELECT esito INTO esitoRISP
         FROM RISPOSTA
