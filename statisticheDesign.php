@@ -8,9 +8,52 @@ include 'statisticheLogica.php';
 
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
-    <!-- Rimane invariato il codice precedente per l'intestazione -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h3 {
+            color: #007bff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
 </head>
+
 <body>
 
     <div class="container">
@@ -78,4 +121,5 @@ include 'statisticheLogica.php';
 
     <!-- Rimane invariato il codice precedente per gli script JavaScript e librerie esterne -->
 </body>
+
 </html>
