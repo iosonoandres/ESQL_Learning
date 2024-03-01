@@ -111,9 +111,7 @@ function getTipoUtente($email) {
             </div>
 
             <!-- Bottoni di navigazione -->
-            <?php if ($indiceCorrente > 0): ?>
-                <a href="?titoloTest=<?= urlencode($titoloTest) ?>&indice=<?= $indiceCorrente - 1 ?>" class="btn btn-secondary">Precedente</a>
-            <?php endif; ?>
+            
             <?php if ($indiceCorrente < $numeroDomande - 1): ?>
                 <button type="submit" name="azione" value="prossima" class="btn btn-primary">Prossima</button>
             <?php else: ?>
