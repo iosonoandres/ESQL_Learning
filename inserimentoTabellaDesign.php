@@ -25,98 +25,84 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creazione Tabella di Esercizio</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <style>
         body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
+            font-family: 'Open Sans', Arial, sans-serif;
+            background-color: #f7f7f7;
+            color: #565656;
         }
-
-        form {
-            width: 50%;
-            margin: 0 auto;
-            margin-bottom: 20px;
+        .container {
+            padding: 40px;
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .05);
         }
-
-        label, input, select {
-            display: block;
-            margin-bottom: 10px;
+        .form-control, .btn {
+            border-radius: 20px;
         }
-
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .btn-primary {
+            padding: 10px 20px;
+            font-weight: bold;
         }
-
-        hr {
-            margin: 20px 0;
-            border: 1px solid #ccc;
-        }
-
-        /* Stile per l'input email in modalità readonly */
         input:read-only {
-            background-color: #f2f2f2; /* Grigio chiaro */
+            background-color: #f2f2f2;
         }
     </style>
 </head>
 <body>
-    <h1>Creazione Tabella di Esercizio</h1>
 
+<div class="container">
+    <h1>Creazione Tabella di Esercizio</h1>
     <!-- Sezione Creazione Tabella -->
-    <form id="creaTabellaForm" method="POST" action="">
+    <form id="creaTabellaForm" method="POST" action="" class="mb-4">
         <!-- Campo nascosto per specificare l'azione -->
         <input type="hidden" name="azione" value="gestisciCreazioneTabella">
-
-        <label for="nomeTabella">Nome Tabella:</label>
-        <input type="text" name="nomeTabella" id="nomeTabella" required>
-
-        <label for="metaDati">Metadati (LO SPAZIO SI USA SOLO TRA ATTRIBUTO PRECEDENTE E SUCCESSIVO, ESEMPIO: id#INT#true# nome#text#false# anni#INT#false# (Spiegazione: settiamo il primo elemento id ad INT e poi con il true o false determiniamo se sia o meno una chiave primaria, e cosi' via) ):</label>
-        <textarea name="metaDati" id="metaDati" rows="4" required></textarea>
-
-        <label for="integritaReferenziale">Integrità Referenziale (attrib1#attrib2#tab2# Lasciare vuota nel caso non ci siano):</label>
-        <textarea name="integritaReferenziale" id="integritaReferenziale" rows="4"></textarea>
-
-        <button type="button" onclick="visualizzaInput()">Visualizza Input</button>
-
-        <button type="submit" name="azione" value="creaTabella">Crea Tabella</button>
+        <div class="form-group">
+            <label for="nomeTabella">Nome Tabella:</label>
+            <input type="text" class="form-control" name="nomeTabella" id="nomeTabella" required>
+        </div>
+        <div class="form-group">
+            <label for="metaDati">Metadati (LO SPAZIO SI USA SOLO TRA ATTRIBUTO PRECEDENTE E SUCCESSIVO, ESEMPIO: id#INT#true# nome#text#false# anni#INT#false#):</label>
+            <textarea class="form-control" name="metaDati" id="metaDati" rows="4" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="integritaReferenziale">Integrità Referenziale (attrib1#attrib2#tab2# Lasciare vuota nel caso non ci siano):</label>
+            <textarea class="form-control" name="integritaReferenziale" id="integritaReferenziale" rows="4"></textarea>
+        </div>
+        <button type="button" class="btn btn-info" onclick="visualizzaInput()">Visualizza Input</button>
+        <button type="submit" class="btn btn-primary" name="azione" value="creaTabella">Crea Tabella</button>
     </form>
 
     <hr>
 
     <!-- Sezione Inserimento Riga -->
     <h2>Inserimento Riga in Tabella Esercizio</h2>
-
-    <form id="inserisciRigaForm" method="POST" action="">
-        <label for="inputRiga">Attributi della Riga (separati da #):</label>
-        <input type="text" name="inputRiga" id="inputRiga" required placeholder="Esempio: 1# Rex# 3#">
-
-        <label for="nomeTabellaRiga">Nome Tabella:</label>
-        <input type="text" name="nomeTabellaRiga" id="nomeTabellaRiga" required>
-
-        <button type="submit" name="azione" value="inserisciRiga">Inserisci Riga</button>
+    <form id="inserisciRigaForm" method="POST" action="" class="mt-4">
+        <div class="form-group">
+            <label for="inputRiga">Attributi della Riga (separati da #):</label>
+            <input type="text" class="form-control" name="inputRiga" id="inputRiga" required placeholder="Esempio: 1# Rex# 3#">
+        </div>
+        <div class="form-group">
+            <label for="nomeTabellaRiga">Nome Tabella:</label>
+            <input type="text" class="form-control" name="nomeTabellaRiga" id="nomeTabellaRiga" required>
+        </div>
+        <button type="submit" class="btn btn-primary" name="azione" value="inserisciRiga">Inserisci Riga</button>
     </form>
+</div>
 
-</body>
-
-<!-- Aggiungi questa parte del codice nella sezione <head> del tuo HTML -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 <script>
     function visualizzaInput() {
-        // Ottieni i valori dagli elementi del modulo
         var nomeTabella = document.getElementById("nomeTabella").value;
         var metaDati = document.getElementById("metaDati").value;
         var integritaReferenziale = document.getElementById("integritaReferenziale").value;
-
-        // Costruisci una stringa contenente l'input
-        var inputString = "Nome Tabella: " + nomeTabella + "\n" +
-                          "Metadati: " + metaDati + "\n" +
-                          "Integrità Referenziale: " + integritaReferenziale;
-
-        // Visualizza l'input in una finestra modale
-        alert("Input che verrà passato alla procedura:\n\n" + inputString);
+        alert("Input che verrà passato alla procedura:\n\nNome Tabella: " + nomeTabella + "\nMetadati: " + metaDati + "\nIntegrità Referenziale: " + integritaReferenziale);
     }
 </script>
-
+</body>
 </html>
